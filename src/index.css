@@ -1,2 +1,22 @@
-@import "tailwindcss"; /* в новой версии V4 подключается так
+@import "tailwindcss";
+/*в новой версии V4 подключается так*/
 
+
+.btn {
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    transform: translateY(-2px);
+}
+.font-georgia {
+    font-family: 'Georgia', serif;
+}
+
+.room-card {
+    --cols: 5;
+    --gap: 20px;
+    width: calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+    height: 320px;
+}
