@@ -1,37 +1,54 @@
-
 import { NavLink, useNavigate } from "react-router-dom";
 
 const Sidebar = () => {
     const navigate = useNavigate();
 
     const linkClasses = ({ isActive }: { isActive: boolean }) =>
-        `block px-4 py-2 rounded-md font-medium transition 
+        `block px-4 py-3 rounded-lg font-medium transition-all duration-200
      ${
             isActive
-                ? "bg-red-700 text-white"
-                : "bg-red-400 text-white hover:bg-red-600"
+                ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md"
+                : "bg-stone-100 text-stone-700 hover:bg-stone-200 hover:shadow-sm"
         }`;
 
     return (
-        <aside className="w-[220px] bg-red-600 flex flex-col justify-between p-4">
+        <aside className="w-[240px] bg-gradient-to-b from-stone-50 to-stone-100 flex flex-col justify-between p-5 border-r border-stone-200 shadow-sm">
             <div>
-                {/* Top Admin block */}
-                <div className="bg-red-400 text-center py-3 rounded-md mb-6 font-semibold text-white">
-                    Admin
+                {/* Top Admin block*/}
+                <div className="bg-gradient-to-r from-stone-800 to-stone-900 text-center py-4 px-4 rounded-xl mb-8 shadow-lg">
+                    <h2 className="font-bold text-white text-lg tracking-wide">
+                        Grand<span className="text-orange-500">Hotel</span>
+                    </h2>
+                    <p className="text-stone-300 text-xs mt-1 font-medium">Admin Panel</p>
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex flex-col gap-3">
+                <nav className="flex flex-col gap-2.5">
                     <NavLink to="/admin/users" className={linkClasses}>
-                        Users
+                        <div className="flex items-center gap-3">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                            <span>Users</span>
+                        </div>
                     </NavLink>
 
                     <NavLink to="/admin/rooms" className={linkClasses}>
-                        Rooms
+                        <div className="flex items-center gap-3">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            <span>Rooms</span>
+                        </div>
                     </NavLink>
 
                     <NavLink to="/admin/price-calendar" className={linkClasses}>
-                        PriceCalendar
+                        <div className="flex items-center gap-3">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span>Price Calendar</span>
+                        </div>
                     </NavLink>
                 </nav>
             </div>
@@ -39,9 +56,9 @@ const Sidebar = () => {
             {/* Return button */}
             <button
                 onClick={() => navigate("/")}
-                className="bg-yellow-400 hover:bg-yellow-500 text-black font-semibold py-2 rounded-md transition"
+                className="bg-gradient-to-r from-amber-100 to-yellow-100 hover:from-amber-200 hover:to-yellow-200 text-stone-800 font-semibold py-3 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md border border-amber-200"
             >
-                RETURN
+                ← RETURN
             </button>
         </aside>
     );

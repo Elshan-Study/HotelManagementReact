@@ -84,7 +84,7 @@ export default function Layout() {
                         )}
 
                         {user?.role === "Admin" && (
-                            <Link to="/admin" className="btn text-xs bg-red-500 text-white rounded-full px-4 py-1.5">
+                            <Link to="/admin" className="btn text-xs bg-red-500 text-white rounded-xl px-4 py-1.5">
                                 Админ
                             </Link>
                         )}

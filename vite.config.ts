@@ -6,6 +6,17 @@ export default defineConfig({
     plugins: [
         react(),
         tailwindcss()
-    ]
+    ],
+    server: {
+        proxy: {
+            '/api': {
+                target: 'http://localhost:5207',
+                changeOrigin: true,
+            },
+            '/uploads': {
+                target: 'http://localhost:5207',
+                changeOrigin: true,
+            }
+        }
+    }
 })
-

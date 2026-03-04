@@ -1,10 +1,188 @@
- const RoomsAdmin = () => {
-        return (
-            <div className="mx- border border-gray-200">
-                <h1 className="text-3xl font-bold mb-4">Rooms</h1>
-                <p className="text-gray-600">Rooms management page</p>
-            </div>
-        );
+// pages/admin/RoomsAdmin.tsx
+import { useState, useRef, useCallback, useEffect } from "react";
+import { useInfiniteRoomTypes } from "../../features/roomType/useRoomTypes";
+import { useInfiniteRooms, useDeleteRoom } from "../../features/room/useRoom";
+import { useInfiniteRoomsByTypeId } from "../../features/roomType/useRoomTypes";
+import RoomTypeDropdown from "../../components/ui/RoomTypeDropdown";
+import RoomListItem from "../../components/ui/RoomListItem";
+import RoomModal from "../../components/ui/RoomModal";
+import RoomTypeModal from "../../components/ui/RoomTypeModal";
+import type { RoomResponseDto } from "../../features/room/roomTypes";
+import type { RoomTypeResponseDto } from "../../features/roomType/roomTypeTypes";
+
+const RoomsAdmin = () => {
+    const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+
+    const [roomModalState, setRoomModalState] = useState<{
+        isOpen: boolean;
+        mode: "create" | "edit";
+        data?: RoomResponseDto;
+    }>({ isOpen: false, mode: "create" });
+
+
+    const [roomTypeModalState, setRoomTypeModalState] = useState<{
+        isOpen: boolean;
+        mode: "create" | "edit";
+        data?: RoomTypeResponseDto;
+    }>({ isOpen: false, mode: "create" });
+
+    const { data: roomTypesData } = useInfiniteRoomTypes({
+        pageSize: 5,
+        search: "",
+        sortBy: "Name:asc",
+    });
+
+    const allRoomsQuery = useInfiniteRooms({
+        pageSize: 10,
+        search: searchTerm,
+        sortBy: "Number:asc",
+    });
+
+    const roomsByTypeQuery = useInfiniteRoomsByTypeId(
+        selectedTypeId || 0,
+        { pageSize: 20, search: searchTerm, sortBy: "Number:asc" }
+    );
+
+    const {
+        data: roomsData,
+        isLoading: isLoadingRooms,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+    } = selectedTypeId === null ? allRoomsQuery : roomsByTypeQuery;
+
+    const deleteMutation = useDeleteRoom();
+
+    const allRoomTypes = roomTypesData?.pages.flatMap((page) => page.items).filter(Boolean) || [];
+    const allRooms = roomsData?.pages.flatMap((page) => page.items).filter(Boolean) || [];
+
+    const observerTarget = useRef<HTMLDivElement>(null);
+
+    const handleObserver = useCallback(
+        (entries: IntersectionObserverEntry[]) => {
+            const [target] = entries;
+            if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
+                void fetchNextPage();
+            }
+        },
+        [fetchNextPage, hasNextPage, isFetchingNextPage]
+    );
+
+    useEffect(() => {
+        const element = observerTarget.current;
+        if (!element) return;
+        const observer = new IntersectionObserver(handleObserver, { threshold: 0.1 });
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, [handleObserver]);
+
+    const handleDeleteRoom = async (id: number) => {
+        if (window.confirm("Are you sure you want to delete this room?")) {
+            try {
+                await deleteMutation.mutateAsync(id);
+            } catch {
+                alert("Failed to delete room");
+            }
+        }
     };
+
+    const handleDeleteRoomType = (typeId: number) => {
+        alert(`Delete room type ${typeId} - coming soon!`);
+    };
+
+    const handleEditRoom = (id: number) => {
+        const room = allRooms.find((r) => r.id === id);
+        if (room) setRoomModalState({ isOpen: true, mode: "edit", data: room });
+    };
+
+    const handleEditRoomType = (typeId: number) => {
+        const roomType = allRoomTypes.find((t) => t.id === typeId);
+        if (roomType) setRoomTypeModalState({ isOpen: true, mode: "edit", data: roomType });
+    };
+
+    return (
+        <div className="h-full p-6 flex flex-col">
+            <div className="flex gap-4 mb-6 shrink-0">
+                <div className="flex-1">
+                    <input
+                        type="text"
+                        placeholder="Search rooms by number..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400"
+                    />
+                </div>
+
+                <button
+                    onClick={() => setRoomModalState({ isOpen: true, mode: "create" })}
+                    className="btn px-4 py-2 bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>Add Room</span>
+                </button>
+
+                <RoomTypeDropdown
+                    selectedTypeId={selectedTypeId}
+                    onTypeSelect={setSelectedTypeId}
+                    onAddRoomType={() => setRoomTypeModalState({ isOpen: true, mode: "create" })}
+                    onEditRoomType={handleEditRoomType}
+                    onDeleteRoomType={handleDeleteRoomType}
+                />
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-2">
+                <div className="space-y-3">
+                    {isLoadingRooms && (
+                        <div className="text-center py-8 text-gray-500">Loading rooms...</div>
+                    )}
+
+                    {allRooms.map((room) => (
+                        <RoomListItem
+                            key={room.id}
+                            room={room}
+                            onEdit={handleEditRoom}
+                            onDelete={handleDeleteRoom}
+                            isDeleting={deleteMutation.isPending}
+                        />
+                    ))}
+
+                    <div ref={observerTarget} className="py-4 text-center">
+                        {isFetchingNextPage && (
+                            <div className="text-gray-500">Loading more rooms...</div>
+                        )}
+                        {!hasNextPage && allRooms.length > 0 && (
+                            <div className="text-gray-400">No more rooms to load</div>
+                        )}
+                    </div>
+
+                    {!isLoadingRooms && allRooms.length === 0 && (
+                        <div className="text-center py-12 text-gray-500">
+                            <p>No rooms found</p>
+                            <p className="text-sm mt-2">Try adjusting your search or filters</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <RoomModal
+                isOpen={roomModalState.isOpen}
+                mode={roomModalState.mode}
+                initialData={roomModalState.data}
+                onClose={() => setRoomModalState({ isOpen: false, mode: "create" })}
+            />
+
+            <RoomTypeModal
+                key={roomTypeModalState.data?.id ?? "create"}
+                isOpen={roomTypeModalState.isOpen}
+                mode={roomTypeModalState.mode}
+                initialData={roomTypeModalState.data}
+                onClose={() => setRoomTypeModalState({ isOpen: false, mode: "create" })}
+            />
+        </div>
+    );
+};
 
 export default RoomsAdmin;

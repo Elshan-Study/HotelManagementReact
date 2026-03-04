@@ -1,5 +1,3 @@
-// features/home/hooks/useRoomScroller.ts
-
 import { useRef } from "react";
 
 export function useRoomScroller() {
