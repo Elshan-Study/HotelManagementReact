@@ -3,7 +3,10 @@ import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../api/errorHandler';
 import { useRoomTypes } from '../../features/roomType/useRoomTypes';
-import { usePriceRulesForPeriod, usePriceRulesByRoomType, useDeletePriceRule } from '../../features/priceRule/usePriceRule';
+import {
+    usePriceRulesForPeriod,
+    useAllPriceRules,
+    useDeletePriceRule } from '../../features/priceRule/usePriceRule';
 import PriceRuleModal from '../../components/ui/PriceRuleModal';
 import type { PriceRuleResponseDto } from '../../features/priceRule/priceRuleTypes';
 import { RuleType } from '../../features/priceRule/priceRuleTypes';
@@ -55,6 +58,11 @@ const PriceCalendar = () => {
     const roomTypes = roomTypesData?.items ?? [];
     const [roomTypeDropdownOpen, setRoomTypeDropdownOpen] = useState(false);
 
+    // Сортировка в Все правила
+    const [sortBy, setSortBy] = useState<string>('startDate:asc');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
+
     // Фильтрация типов комнат по поиску
     const filteredRoomTypes = roomTypes.filter(rt =>
         rt.name.toLowerCase().includes(roomTypeSearch.toLowerCase())
@@ -73,10 +81,30 @@ const PriceCalendar = () => {
     });
 
     // Все правила для панели "все правила"
-    const { data: allRulesData } = usePriceRulesByRoomType(selectedRoomTypeId, 1, 200);
+    const { data: allRulesData } = useAllPriceRules(
+        selectedRoomTypeId > 0 ? selectedRoomTypeId : null,
+        1,
+        200,
+        sortBy  // передаём сортировку
+    );
     const allRules = allRulesData?.items ?? [];
 
     const activeRules = rulesData?.items ?? [];
+
+    // Фильтрация по диапазону дат и поиску
+
+    // Есть ли пересечение с выбранным диапазоном
+    const hasDateIntersection = (rule: PriceRuleResponseDto): boolean => {
+        if (!dateFrom && !dateTo) return false;
+        const from = dateFrom ? new Date(dateFrom) : null;
+        const to = dateTo ? new Date(dateTo) : null;
+        const ruleStart = new Date(rule.startDate);
+        const ruleEnd = new Date(rule.endDate);
+        if (from && to) return ruleStart <= to && ruleEnd >= from;
+        if (from) return ruleEnd >= from;
+        if (to) return ruleStart <= to;
+        return false;
+    };
 
     // Правила для отображения в календаре (активные + опционально неактивные)
     const calendarRules = showInactive
@@ -162,10 +190,35 @@ const PriceCalendar = () => {
         }
     };
 
+    const handleSort = (col: string) => {
+        setSortBy(prev => {
+            const [prevCol, prevDir] = prev.split(':');
+            if (prevCol === col) return `${col}:${prevDir === 'asc' ? 'desc' : 'asc'}`;
+            return `${col}:asc`;
+        });
+    };
+
+    const SortIcon = ({ col }: { col: string }) => {
+        const [prevCol, prevDir] = sortBy.split(':');
+        if (prevCol !== col) return <span className="text-gray-300 ml-1">↕</span>;
+        return <span className="text-orange-500 ml-1">{prevDir === 'asc' ? '↑' : '↓'}</span>;
+    };
+
     // Панель всех правил с поиском
-    const filteredAllRules = allRules.filter(r =>
-        r.name.toLowerCase().includes(allRulesSearch.toLowerCase())
-    );
+    const filteredAllRules = useMemo(() => {
+        let result = allRules.filter(r =>
+            r.name.toLowerCase().includes(allRulesSearch.toLowerCase())
+        );
+        if (dateFrom) {
+            const from = new Date(dateFrom);
+            result = result.filter(r => new Date(r.endDate) >= from);
+        }
+        if (dateTo) {
+            const to = new Date(dateTo);
+            result = result.filter(r => new Date(r.startDate) <= to);
+        }
+        return result;
+    }, [allRules, allRulesSearch, dateFrom, dateTo]);
 
     // Правила для боковой панели
     const sidebarRules = selectedDate ? getRulesForDate(selectedDate) : calendarRules;
@@ -181,21 +234,19 @@ const PriceCalendar = () => {
             <div className="flex items-center justify-between shrink-0">
                 <h1 className="text-2xl font-bold text-stone-800">Ценовой календарь</h1>
                 <div className="flex items-center gap-3">
-                    {selectedRoomTypeId > 0 && (
-                        <button
-                            onClick={() => { setAllRulesOpen(v => !v); setSelectedDate(null); }}
-                            className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors flex items-center gap-2 ${
-                                allRulesOpen
-                                    ? 'bg-stone-800 text-white border-stone-800'
-                                    : 'bg-white text-stone-700 border-gray-300 hover:bg-gray-50'
-                            }`}
-                        >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                            </svg>
-                            Все правила
-                        </button>
-                    )}
+                    <button
+                        onClick={() => { setAllRulesOpen(v => !v); setSelectedDate(null); }}
+                        className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors flex items-center gap-2 ${
+                            allRulesOpen
+                                ? 'bg-stone-800 text-white border-stone-800'
+                                : 'bg-white text-stone-700 border-gray-300 hover:bg-gray-50'
+                        }`}
+                    >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                        </svg>
+                        Все правила
+                    </button>
                     <button
                         onClick={() => setModalState({ isOpen: true, mode: 'create' })}
                         disabled={!selectedRoomTypeId}
@@ -221,6 +272,15 @@ const PriceCalendar = () => {
                         onBlur={() => setTimeout(() => setRoomTypeDropdownOpen(false), 150)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400 text-sm"
                     />
+                    {selectedRoomTypeId > 0 && (
+                        <button
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => { setSelectedRoomTypeId(0); setRoomTypeSearch(''); setSelectedDate(null); }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            ✕
+                        </button>
+                    )}
 
                     {roomTypeDropdownOpen && (
                         <div className="absolute top-full mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto">
@@ -259,86 +319,147 @@ const PriceCalendar = () => {
                 )}
             </div>
 
-            {!selectedRoomTypeId ? (
-                <div className="flex-1 flex items-center justify-center text-gray-400">
-                    Выберите тип комнаты чтобы увидеть календарь
-                </div>
-            ) : allRulesOpen ? (
-                /* Панель всех правил */
-                <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="mb-3 shrink-0">
+            {allRulesOpen ? (
+                // панель всех правил
+                <div className="flex-1 flex flex-col overflow-hidden gap-3">
+                    {/* Фильтры */}
+                    <div className="flex items-center gap-3 shrink-0 flex-wrap">
                         <input
                             type="text"
                             placeholder="Поиск по названию..."
                             value={allRulesSearch}
                             onChange={(e) => setAllRulesSearch(e.target.value)}
-                            className="w-full max-w-sm px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400 text-sm"
+                            className="w-56 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400 text-sm"
                         />
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-500">Период:</span>
+                            <input
+                                type="date"
+                                value={dateFrom}
+                                onChange={(e) => setDateFrom(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400 text-sm"
+                            />
+                            <span className="text-gray-400">—</span>
+                            <input
+                                type="date"
+                                value={dateTo}
+                                onChange={(e) => setDateTo(e.target.value)}
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400 text-sm"
+                            />
+                            {(dateFrom || dateTo) && (
+                                <button
+                                    onClick={() => { setDateFrom(''); setDateTo(''); }}
+                                    className="text-xs text-gray-400 hover:text-gray-600 px-2 py-1 rounded hover:bg-gray-100"
+                                >
+                                    ✕ Сбросить
+                                </button>
+                            )}
+                        </div>
+                        <span className="text-xs text-gray-400 ml-auto">{filteredAllRules.length} правил</span>
                     </div>
-                    <div className="flex-1 overflow-y-auto">
-                        {filteredAllRules.length === 0 && (
-                            <p className="text-gray-400 text-sm py-8 text-center">Нет правил</p>
-                        )}
+
+                    {/* Таблица */}
+                    <div className="flex-1 overflow-y-auto border border-gray-200 rounded-xl">
                         <table className="w-full text-sm">
-                            <thead>
-                            <tr className="border-b border-gray-200 text-gray-500 text-left">
-                                <th className="pb-3 font-medium">Название</th>
-                                <th className="pb-3 font-medium">Тип</th>
-                                <th className="pb-3 font-medium">Период</th>
-                                <th className="pb-3 font-medium">Значение</th>
-                                <th className="pb-3 font-medium">Статус</th>
-                                <th className="pb-3 font-medium"></th>
+                            <thead className="sticky top-0 bg-white border-b border-gray-200 z-10">
+                            <tr className="text-left">
+                                <th className="px-4 py-3 font-medium text-gray-500 cursor-pointer hover:text-gray-700 select-none" onClick={() => handleSort('name')}>
+                                    Название<SortIcon col="name" />
+                                </th>
+                                <th className="px-4 py-3 font-medium text-gray-500">Тип комнаты</th>
+                                <th className="px-4 py-3 font-medium text-gray-500 cursor-pointer hover:text-gray-700 select-none" onClick={() => handleSort('startDate')}>
+                                    Начало<SortIcon col="startDate" />
+                                </th>
+                                <th className="px-4 py-3 font-medium text-gray-500 cursor-pointer hover:text-gray-700 select-none" onClick={() => handleSort('endDate')}>
+                                    Конец<SortIcon col="endDate" />
+                                </th>
+                                <th className="px-4 py-3 font-medium text-gray-500 cursor-pointer hover:text-gray-700 select-none" onClick={() => handleSort('value')}>
+                                    Значение<SortIcon col="value" />
+                                </th>
+                                <th className="px-4 py-3 font-medium text-gray-500 cursor-pointer hover:text-gray-700 select-none" onClick={() => handleSort('isActive')}>
+                                    Статус<SortIcon col="isActive" />
+                                </th>
+                                <th className="px-4 py-3"></th>
                             </tr>
                             </thead>
                             <tbody>
-                            {filteredAllRules.map(rule => (
-                                <tr key={rule.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                                    <td className="py-2.5 font-medium text-stone-800">
-                                        <div className="flex items-center gap-2">
-                                            <div className={`w-2.5 h-2.5 rounded-sm shrink-0 ${ruleColorMap[rule.id]?.split(' ')[0]}`} />
-                                            {rule.name}
-                                        </div>
-                                    </td>
-                                    <td className="py-2.5 text-gray-500">{RULE_TYPE_LABELS[rule.ruleType] ?? '—'}</td>
-                                    <td className="py-2.5 text-gray-500">
-                                        {new Date(rule.startDate).toLocaleDateString('ru-RU')}
-                                        {rule.startDate !== rule.endDate && ` — ${new Date(rule.endDate).toLocaleDateString('ru-RU')}`}
-                                    </td>
-                                    <td className="py-2.5">
-                                            <span className={`font-semibold ${rule.isIncrease ? 'text-green-600' : 'text-red-500'}`}>
-                                                {rule.isIncrease ? '+' : '-'}{rule.value}{rule.isPercent ? '%' : ' ₼'}
-                                            </span>
-                                    </td>
-                                    <td className="py-2.5">
-                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${rule.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                                {rule.isActive ? 'Активно' : 'Неактивно'}
-                                            </span>
-                                    </td>
-                                    <td className="py-2.5">
-                                        <div className="flex gap-1 justify-end">
-                                            <button
-                                                onClick={() => { setModalState({ isOpen: true, mode: 'edit', data: rule }); setAllRulesOpen(false); }}
-                                                className="p-1.5 hover:bg-blue-100 rounded transition-colors"
-                                            >
-                                                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(rule.id)}
-                                                className="p-1.5 hover:bg-red-100 rounded transition-colors"
-                                            >
-                                                <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </td>
+                            {filteredAllRules.length === 0 && (
+                                <tr>
+                                    <td colSpan={7} className="py-12 text-center text-gray-400 text-sm">Нет правил</td>
                                 </tr>
-                            ))}
+                            )}
+                            {filteredAllRules.map(rule => {
+                                const intersects = hasDateIntersection(rule);
+                                return (
+                                    <tr
+                                        key={rule.id}
+                                        className={`border-b border-gray-100 transition-colors ${
+                                            intersects ? 'bg-orange-50' : 'hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        <td className="px-4 py-2.5 font-medium text-stone-800">
+                                            <div className="flex items-center gap-2">
+                                                <div className={`w-2.5 h-2.5 rounded-sm shrink-0 ${ruleColorMap[rule.id]?.split(' ')[0]}`} />
+                                                {rule.name}
+                                                {intersects && (
+                                                    <span className="text-xs px-1.5 py-0.5 bg-orange-100 text-orange-600 rounded-full">
+                                                пересекается
+                                            </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-2.5 text-gray-500">
+                                            {rule.roomTypeId === null
+                                                ? <span className="px-2 py-0.5 rounded-full text-xs bg-purple-100 text-purple-600">Глобальное</span>
+                                                : (roomTypes.find(rt => rt.id === rule.roomTypeId)?.name ?? '—')
+                                            }
+                                        </td>
+                                        <td className="px-4 py-2.5 text-gray-500">
+                                            {new Date(rule.startDate).toLocaleDateString('ru-RU')}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-gray-500">
+                                            {new Date(rule.endDate).toLocaleDateString('ru-RU')}
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                    <span className={`font-semibold ${rule.isIncrease ? 'text-green-600' : 'text-red-500'}`}>
+                                        {rule.isIncrease ? '+' : '-'}{rule.value}{rule.isPercent ? '%' : ' ₼'}
+                                    </span>
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${rule.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                        {rule.isActive ? 'Активно' : 'Неактивно'}
+                                    </span>
+                                        </td>
+                                        <td className="px-4 py-2.5">
+                                            <div className="flex gap-1 justify-end">
+                                                <button
+                                                    onClick={() => { setModalState({ isOpen: true, mode: 'edit', data: rule }); setAllRulesOpen(false); }}
+                                                    className="p-1.5 hover:bg-blue-100 rounded transition-colors"
+                                                >
+                                                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(rule.id)}
+                                                    className="p-1.5 hover:bg-red-100 rounded transition-colors"
+                                                >
+                                                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             </tbody>
                         </table>
                     </div>
+                </div>
+            ) : !selectedRoomTypeId ? (
+                <div className="flex-1 flex items-center justify-center text-gray-400">
+                    Выберите тип комнаты чтобы увидеть календарь
                 </div>
             ) : (
                 <div className="flex-1 flex gap-4 overflow-hidden">

@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form';
 import { RuleType } from '../../features/priceRule/priceRuleTypes';
 import type { PriceRuleResponseDto } from '../../features/priceRule/priceRuleTypes';
 import { useCreatePriceRule, useUpdatePriceRule } from '../../features/priceRule/usePriceRule';
+import toast from 'react-hot-toast';
+import { getErrorMessage } from '../../api/errorHandler.ts';
 
 interface Props {
     isOpen: boolean;
@@ -22,6 +24,7 @@ interface FormValues {
     isPercent: boolean;
     value: number;
     isActive: boolean;
+    isGlobal: boolean;
 }
 
 const RULE_TYPE_OPTIONS = [
@@ -29,7 +32,6 @@ const RULE_TYPE_OPTIONS = [
     { value: RuleType.SpecialDate, label: 'Специальная дата' },
 ];
 
-// Конвертация ruleType из любого формата (строка или число) в число
 const toRuleTypeNumber = (val: unknown): number => {
     if (typeof val === 'number') return val;
     if (val === 'SeasonalRange') return RuleType.SeasonalRange;
@@ -51,6 +53,7 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
             isPercent: false,
             value: 0,
             isActive: true,
+            isGlobal: false,
         },
     });
 
@@ -78,6 +81,7 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                 isPercent: initialData.isPercent,
                 value: initialData.value,
                 isActive: initialData.isActive,
+                isGlobal: initialData.roomTypeId === null,
             });
         } else if (mode === 'create') {
             reset({
@@ -89,6 +93,7 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                 isPercent: false,
                 value: 0,
                 isActive: true,
+                isGlobal: false,
             });
         }
     }, [mode, initialData, reset, isOpen]);
@@ -106,12 +111,29 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
             };
 
             if (mode === 'create') {
-                await createMutation.mutateAsync({ ...normalized, roomTypeId });
+                await toast.promise(
+                    createMutation.mutateAsync({
+                        ...normalized,
+                        roomTypeId: normalized.isGlobal ? null : roomTypeId,
+                    }),
+                    {
+                        loading: 'Создание правила...',
+                        success: 'Правило успешно создано',
+                        error: (err) => getErrorMessage(err),
+                    }
+                );
             } else if (initialData) {
-                await updateMutation.mutateAsync({ id: initialData.id, data: normalized });
+                await toast.promise(
+                    updateMutation.mutateAsync({ id: initialData.id, data: normalized }),
+                    {
+                        loading: 'Сохранение изменений...',
+                        success: 'Правило обновлено',
+                        error: (err) => getErrorMessage(err),
+                    }
+                );
             }
             onClose();
-        } catch (error: unknown) {
+        } catch {
             // ошибка уже показана через toast.promise
         }
     };
@@ -246,6 +268,22 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                             </div>
                         </div>
                     </div>
+
+                    {/* Глобальное правило — только при создании */}
+                    {mode === 'create' && (
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={watch('isGlobal') === true}
+                                onChange={(e) => setValue('isGlobal', e.target.checked)}
+                                className="w-4 h-4 accent-orange-500"
+                            />
+                            <span className="text-sm text-gray-700">
+                                Глобальное правило
+                                <span className="text-gray-400 text-xs ml-1">(для всех типов комнат)</span>
+                            </span>
+                        </label>
+                    )}
 
                     {/* isActive только при редактировании */}
                     {mode === 'edit' && (

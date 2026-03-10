@@ -32,6 +32,18 @@ export const getPriceRulesForPeriod = async (
     return data;
 };
 
+export const getAllPriceRules = async (
+    roomTypeId: number | null,
+    page = 1,
+    pageSize = 200,
+    sortBy = 'startDate:asc'
+): Promise<PagedResult<PriceRuleResponseDto>> => {
+    const { data } = await api.get<PagedResult<PriceRuleResponseDto>>(`${URL}/all`, {
+        params: { roomTypeId: roomTypeId ?? undefined, page, pageSize, sortBy },
+    });
+    return data;
+};
+
 export const calculatePrice = async (
     dto: PriceCalculationRequestDto
 ): Promise<PriceCalculationResponseDto> => {

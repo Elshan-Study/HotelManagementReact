@@ -9,6 +9,7 @@ import type {
 import {
     getPriceRulesByRoomType,
     getPriceRulesForPeriod,
+    getAllPriceRules,
     calculatePrice,
     createPriceRule,
     updatePriceRule,
@@ -31,6 +32,13 @@ export const usePriceRulesForPeriod = (dto: PeriodRulesRequestDto) =>
         enabled: !!dto.roomTypeId,
     });
 
+export const useAllPriceRules = (roomTypeId: number | null, page = 1, pageSize = 200, sortBy = 'startDate:asc') =>
+    useQuery({
+        queryKey: ['price-rules-all', roomTypeId, page, pageSize, sortBy],
+        queryFn: () => getAllPriceRules(roomTypeId, page, pageSize, sortBy),
+        placeholderData: keepPreviousData,
+    });
+
 export const usePriceCalculation = (dto: PriceCalculationRequestDto | null) =>
     useQuery({
         queryKey: ['price-calculation', dto],
@@ -45,6 +53,7 @@ export const useCreatePriceRule = () => {
         onSuccess: () => {
             void qc.invalidateQueries({ queryKey: ['price-rules'] });
             void qc.invalidateQueries({ queryKey: ['price-rules-period'] });
+            void qc.invalidateQueries({ queryKey: ['price-rules-all'] });
         },
     });
 };
@@ -57,6 +66,7 @@ export const useUpdatePriceRule = () => {
         onSuccess: () => {
             void qc.invalidateQueries({ queryKey: ['price-rules'] });
             void qc.invalidateQueries({ queryKey: ['price-rules-period'] });
+            void qc.invalidateQueries({ queryKey: ['price-rules-all'] });
         },
     });
 };
@@ -68,6 +78,7 @@ export const useDeletePriceRule = () => {
         onSuccess: () => {
             void qc.invalidateQueries({ queryKey: ['price-rules'] });
             void qc.invalidateQueries({ queryKey: ['price-rules-period'] });
+            void qc.invalidateQueries({ queryKey: ['price-rules-all'] });
         },
     });
 };
