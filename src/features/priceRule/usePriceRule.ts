@@ -1,0 +1,73 @@
+// src/features/priceRule/usePriceRule.ts
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import type {
+    CreatePriceRuleDto,
+    UpdatePriceRuleDto,
+    PeriodRulesRequestDto,
+    PriceCalculationRequestDto,
+} from './priceRuleTypes';
+import {
+    getPriceRulesByRoomType,
+    getPriceRulesForPeriod,
+    calculatePrice,
+    createPriceRule,
+    updatePriceRule,
+    deletePriceRule,
+} from './priceRuleService';
+
+export const usePriceRulesByRoomType = (roomTypeId: number, page = 1, pageSize = 20) =>
+    useQuery({
+        queryKey: ['price-rules', roomTypeId, page, pageSize],
+        queryFn: () => getPriceRulesByRoomType(roomTypeId, page, pageSize),
+        placeholderData: keepPreviousData,
+        enabled: !!roomTypeId,
+    });
+
+export const usePriceRulesForPeriod = (dto: PeriodRulesRequestDto) =>
+    useQuery({
+        queryKey: ['price-rules-period', dto],
+        queryFn: () => getPriceRulesForPeriod(dto),
+        placeholderData: keepPreviousData,
+        enabled: !!dto.roomTypeId,
+    });
+
+export const usePriceCalculation = (dto: PriceCalculationRequestDto | null) =>
+    useQuery({
+        queryKey: ['price-calculation', dto],
+        queryFn: () => calculatePrice(dto!),
+        enabled: !!dto && !!dto.roomTypeId && !!dto.startDate && !!dto.endDate,
+    });
+
+export const useCreatePriceRule = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (data: CreatePriceRuleDto) => createPriceRule(data),
+        onSuccess: () => {
+            void qc.invalidateQueries({ queryKey: ['price-rules'] });
+            void qc.invalidateQueries({ queryKey: ['price-rules-period'] });
+        },
+    });
+};
+
+export const useUpdatePriceRule = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: ({ id, data }: { id: number; data: UpdatePriceRuleDto }) =>
+            updatePriceRule(id, data),
+        onSuccess: () => {
+            void qc.invalidateQueries({ queryKey: ['price-rules'] });
+            void qc.invalidateQueries({ queryKey: ['price-rules-period'] });
+        },
+    });
+};
+
+export const useDeletePriceRule = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: deletePriceRule,
+        onSuccess: () => {
+            void qc.invalidateQueries({ queryKey: ['price-rules'] });
+            void qc.invalidateQueries({ queryKey: ['price-rules-period'] });
+        },
+    });
+};

@@ -125,8 +125,6 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
         handleClose();
     };
 
-
-
     const isPending = createMutation.isPending || updateMutation.isPending || addPhotosMutation.isPending || deletePhotoMutation.isPending;
     const isValid = code.trim() !== "" && name.trim() !== "" && description.trim() !== "" && capacity !== "" && basePrice !== "";
     const visibleExistingPhotos = initialData?.photos.filter((p) => !photosToDelete.includes(p.id)) ?? [];
