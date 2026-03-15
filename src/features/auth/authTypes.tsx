@@ -16,5 +16,6 @@ export interface AuthResponse {
     accessTokenExpiresAt: string;
     userId: string;
     email: string;
+    displayName: string;
     role: string;
 }

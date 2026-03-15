@@ -36,7 +36,20 @@ export const getRoomTypes = async (
             ...(params.maxChildren && { maxChildren: params.maxChildren }),
             ...(params.minPrice && { minPrice: params.minPrice }),
             ...(params.maxPrice && { maxPrice: params.maxPrice }),
-            ...(params.tagIds && params.tagIds.length > 0 && { tagIds: params.tagIds }),
+        },
+        paramsSerializer: (p) => {
+            const search = new URLSearchParams();
+            Object.entries(p).forEach(([key, value]) => {
+                if (Array.isArray(value)) {
+                    value.forEach((v) => search.append(key, String(v)));
+                } else if (value !== undefined) {
+                    search.append(key, String(value));
+                }
+            });
+            if (params.tagIds && params.tagIds.length > 0) {
+                params.tagIds.forEach((id) => search.append('tagIds', String(id)));
+            }
+            return search.toString();
         },
     });
     return data;
@@ -67,7 +80,6 @@ export const getRoomsByTypeId = async (
 };
 
  //POST /api/room-types - Создать тип комнаты с фото
- //Отправляет multipart/form-data
 
 export const createRoomType = async (
     roomTypeData: CreateRoomTypeWithPhotosDto
@@ -107,7 +119,6 @@ export const createRoomType = async (
 
 
 //PUT /api/room-types/{id} - Обновить тип комнаты
- //Отправляет application/json (без фото)
 
 export const updateRoomType = async (
     id: number,
@@ -123,10 +134,8 @@ export const deleteRoomType = async (id: number): Promise<void> => {
     await api.delete(`${API_URL}/${id}`);
 };
 
-// ============================================
-// PHOTO MANAGEMENT (требуют авторизации)
-// ============================================
 
+// PHOTO MANAGEMENT (требуют авторизации)
 
 //POST /api/room-types/{id}/photos - Добавить фото к существующему типу
 

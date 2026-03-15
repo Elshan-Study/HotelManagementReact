@@ -9,6 +9,7 @@ import type {
     PriceCalculationResponseDto,
     PagedResult,
 } from './priceRuleTypes';
+import type {RoomTypeResponseDto} from "../roomType/roomTypeTypes.tsx";
 
 const URL = '/price-rules';
 
@@ -64,4 +65,14 @@ export const updatePriceRule = async (id: number, dto: UpdatePriceRuleDto): Prom
 
 export const deletePriceRule = async (id: number): Promise<void> => {
     await api.delete(`${URL}/${id}`);
+};
+
+export const getDiscountedRoomTypes = async (
+    page = 1,
+    pageSize = 20
+): Promise<PagedResult<RoomTypeResponseDto>> => {
+    const { data } = await api.get<PagedResult<RoomTypeResponseDto>>(`${URL}/discounted`, {
+        params: { page, pageSize },
+    });
+    return data;
 };

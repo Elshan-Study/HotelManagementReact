@@ -4,11 +4,14 @@ export interface RoomTypeResponseDto {
     name: string;
     description: string;
     capacity: number;
+    maxOccupancyAdults: number;
+    maxOccupancyChildren: number;
     basePrice: number;
     isActive: boolean;
     photos: RoomPhotoResponseDto[];
     tags: TagResponseDto[];
 }
+
 
 export interface RoomPhotoResponseDto {
     id: number;
@@ -32,6 +35,8 @@ interface CreateRoomTypeDto {
     name: string;
     description: string;
     capacity: number;
+    maxOccupancyAdults: number;
+    maxOccupancyChildren: number;
     basePrice: number;
     isActive: boolean;
     tagIds?: number[];

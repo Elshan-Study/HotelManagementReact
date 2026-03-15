@@ -14,7 +14,8 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
     const [code, setCode] = useState(initialData?.code ?? "");
     const [name, setName] = useState(initialData?.name ?? "");
     const [description, setDescription] = useState(initialData?.description ?? "");
-    const [capacity, setCapacity] = useState(initialData ? String(initialData.capacity) : "");
+    const [maxOccupancyAdults, setMaxOccupancyAdults] = useState(initialData ? String(initialData.maxOccupancyAdults) : "");
+    const [maxOccupancyChildren, setMaxOccupancyChildren] = useState(initialData ? String(initialData.maxOccupancyChildren) : "");
     const [basePrice, setBasePrice] = useState(initialData ? String(initialData.basePrice) : "");
     const [isActive, setIsActive] = useState(initialData?.isActive ?? true);
     const [selectedTagIds, setSelectedTagIds] = useState<number[]>(initialData?.tags.map((t) => t.id) ?? []);
@@ -25,7 +26,6 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
     const [isCreatingTag, setIsCreatingTag] = useState(false);
     const [tagSearch, setTagSearch] = useState("");
     const [debouncedTagSearch, setDebouncedTagSearch] = useState("");
-
 
     const createMutation = useCreateRoomType();
     const updateMutation = useUpdateRoomType();
@@ -54,13 +54,10 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-
     useEffect(() => {
         const timer = setTimeout(() => setDebouncedTagSearch(tagSearch), 300);
         return () => clearTimeout(timer);
     }, [tagSearch]);
-
-
 
     const allTags = tagsData?.pages.flatMap((p) => p.items).filter(Boolean) ?? [];
 
@@ -79,7 +76,6 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
         [fetchNextPage, hasNextPage, isFetchingNextTagPage]
     );
 
-
     const toggleTag = (tagId: number) =>
         setSelectedTagIds((prev) => prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]);
 
@@ -90,7 +86,10 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
     const handleCreateTag = async () => {
         const trimmed = newTagName.trim();
         if (!trimmed) return;
-        const slug = trimmed.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+        const slug = trimmed
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^\p{L}0-9-]/gu, "");
         setIsCreatingTag(true);
         try {
             const newTagId = await createTagMutation.mutateAsync({ name: trimmed, slug });
@@ -100,6 +99,7 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
             setIsCreatingTag(false);
         }
     };
+
     const handleClose = () => {
         setIsTagDropdownOpen(false);
         setTagSearch("");
@@ -107,17 +107,30 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
     };
 
     const handleSubmit = async () => {
+        const adults = Number(maxOccupancyAdults);
+        const children = Number(maxOccupancyChildren);
+        // capacity считается автоматически на беке как adults + children
         if (mode === "create") {
             await createMutation.mutateAsync({
                 code, name, description,
-                capacity: Number(capacity), basePrice: Number(basePrice),
+                capacity: adults + children,
+                maxOccupancyAdults: adults,
+                maxOccupancyChildren: children,
+                basePrice: Number(basePrice),
                 isActive, tagIds: selectedTagIds,
                 photos: newPhotos.length > 0 ? newPhotos : undefined,
             });
         } else if (initialData) {
             await updateMutation.mutateAsync({
                 id: initialData.id,
-                data: { id: initialData.id, code, name, description, capacity: Number(capacity), basePrice: Number(basePrice), isActive, tagIds: selectedTagIds },
+                data: {
+                    id: initialData.id, code, name, description,
+                    capacity: adults + children,
+                    maxOccupancyAdults: adults,
+                    maxOccupancyChildren: children,
+                    basePrice: Number(basePrice),
+                    isActive, tagIds: selectedTagIds
+                },
             });
             await Promise.all(photosToDelete.map((id) => deletePhotoMutation.mutateAsync(id)));
             if (newPhotos.length > 0) await addPhotosMutation.mutateAsync({ id: initialData.id, data: { photos: newPhotos } });
@@ -126,20 +139,16 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
     };
 
     const isPending = createMutation.isPending || updateMutation.isPending || addPhotosMutation.isPending || deletePhotoMutation.isPending;
-    const isValid = code.trim() !== "" && name.trim() !== "" && description.trim() !== "" && capacity !== "" && basePrice !== "";
+    const isValid = code.trim() !== "" && name.trim() !== "" && description.trim() !== "" && maxOccupancyAdults !== "" && basePrice !== "";
     const visibleExistingPhotos = initialData?.photos.filter((p) => !photosToDelete.includes(p.id)) ?? [];
 
     if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-             onMouseDown={(e) => {
-                 overlayMouseDown.current = e.target === e.currentTarget;
-             }}
+             onMouseDown={(e) => { overlayMouseDown.current = e.target === e.currentTarget; }}
              onMouseUp={(e) => {
-                 if (overlayMouseDown.current && e.target === e.currentTarget) {
-                     handleClose();
-                 }
+                 if (overlayMouseDown.current && e.target === e.currentTarget) handleClose();
                  overlayMouseDown.current = false;
              }}>
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[100vh]" onClick={(e) => e.stopPropagation()}>
@@ -175,10 +184,19 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                                   className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                         <div className="flex flex-col gap-1">
-                            <label className="text-sm font-medium text-gray-700">Capacity</label>
-                            <input type="number" min={1} value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder="e.g. 2"
+                            <label className="text-sm font-medium text-gray-700">Adults</label>
+                            <input type="number" min={1} value={maxOccupancyAdults}
+                                   onChange={(e) => setMaxOccupancyAdults(e.target.value)}
+                                   placeholder="e.g. 2"
+                                   className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <label className="text-sm font-medium text-gray-700">Children</label>
+                            <input type="number" min={0} value={maxOccupancyChildren}
+                                   onChange={(e) => setMaxOccupancyChildren(e.target.value)}
+                                   placeholder="e.g. 1"
                                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                         </div>
                         <div className="flex flex-col gap-1">
@@ -215,18 +233,14 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                                 })}
                             </div>
                         )}
-                        <div className="relative">
+                        <div className="relative" ref={tagDropdownRef}>
                             <input
                                 type="text"
                                 value={tagSearch}
-                                onChange={(e) => {
-                                    setTagSearch(e.target.value);
-                                    setIsTagDropdownOpen(true);
-                                }}
+                                onChange={(e) => { setTagSearch(e.target.value); setIsTagDropdownOpen(true); }}
                                 onFocus={() => setIsTagDropdownOpen(true)}
-
                                 placeholder="Search tags..."
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none "
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
                             />
                             <button
                                 onClick={() => setIsTagDropdownOpen((v) => !v)}

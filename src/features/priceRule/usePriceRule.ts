@@ -13,7 +13,7 @@ import {
     calculatePrice,
     createPriceRule,
     updatePriceRule,
-    deletePriceRule,
+    deletePriceRule, getDiscountedRoomTypes,
 } from './priceRuleService';
 
 export const usePriceRulesByRoomType = (roomTypeId: number, page = 1, pageSize = 20) =>
@@ -44,6 +44,13 @@ export const usePriceCalculation = (dto: PriceCalculationRequestDto | null) =>
         queryKey: ['price-calculation', dto],
         queryFn: () => calculatePrice(dto!),
         enabled: !!dto && !!dto.roomTypeId && !!dto.startDate && !!dto.endDate,
+    });
+
+export const useDiscountedRoomTypes = (page = 1, pageSize = 20) =>
+    useQuery({
+        queryKey: ['price-rules-discounted', page, pageSize],
+        queryFn: () => getDiscountedRoomTypes(page, pageSize),
+        placeholderData: keepPreviousData,
     });
 
 export const useCreatePriceRule = () => {
@@ -82,3 +89,4 @@ export const useDeletePriceRule = () => {
         },
     });
 };
+
