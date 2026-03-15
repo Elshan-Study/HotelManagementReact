@@ -5,7 +5,7 @@ import type {
     RoomQueryParams,
     CreateRoomDto,
     UpdateRoomDto
-} from './roomTypes';
+} from './roomTypes.ts';
 
 const API_URL = '/rooms';
 

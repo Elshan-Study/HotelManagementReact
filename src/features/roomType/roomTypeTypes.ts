@@ -12,7 +12,6 @@ export interface RoomTypeResponseDto {
     tags: TagResponseDto[];
 }
 
-
 export interface RoomPhotoResponseDto {
     id: number;
     url: string;
@@ -27,7 +26,7 @@ export interface TagResponseDto {
 }
 
 // ============================================
-// REQUEST DTOs (что отправляем на API)
+// REQUEST DTOs
 // ============================================
 
 interface CreateRoomTypeDto {
@@ -56,7 +55,6 @@ export interface RoomTypeFilterRequest {
     sortBy?: string;
     search?: string;
 
-    // Фильтры
     code?: string;
     isActive?: boolean;
 
@@ -73,6 +71,11 @@ export interface RoomTypeFilterRequest {
     maxPrice?: number;
 
     tagIds?: number[];
+
+    // Фильтр доступности — показывать только типы с хотя бы одной
+    // свободной комнатой в указанный период
+    checkIn?: string;   // "YYYY-MM-DD"
+    checkOut?: string;  // "YYYY-MM-DD"
 }
 
 export interface PagedResult<T> {
@@ -83,7 +86,7 @@ export interface PagedResult<T> {
 }
 
 // ============================================
-// FORM DATA для создания с фото
+// FORM DATA
 // ============================================
 
 export interface CreateRoomTypeWithPhotosDto extends CreateRoomTypeDto {

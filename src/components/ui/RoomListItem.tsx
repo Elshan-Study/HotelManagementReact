@@ -1,7 +1,7 @@
 // components/ui/RoomListItem.tsx
 
-import { useRoomType } from "../../features/roomType/useRoomTypes";
-import type { RoomResponseDto } from "../../features/room/roomTypes";
+import { useRoomType } from "../../features/roomType/useRoomTypes.ts";
+import type { RoomResponseDto } from "../../features/room/roomTypes.ts";
 
 interface Props {
     room: RoomResponseDto;

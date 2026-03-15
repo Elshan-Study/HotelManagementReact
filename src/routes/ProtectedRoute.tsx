@@ -1,5 +1,5 @@
 import { Navigate, Outlet } from "react-router-dom";
-import { useAuth } from "../features/auth/useAuth";
+import { useAuth } from "../features/auth/useAuth.ts";
 import { useSelector } from "react-redux";
 import type { RootState } from "../store";
 

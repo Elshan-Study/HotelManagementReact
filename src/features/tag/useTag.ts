@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { CreateTagDto, TagPagedRequest } from './tagTypes.tsx';
-import { getTags, createTag, updateTag, deleteTag } from './tagService';
+import type { CreateTagDto, TagPagedRequest } from './tagTypes.ts';
+import { getTags, createTag, updateTag, deleteTag } from './tagService.ts';
 
 export const useInfiniteTags = (params: Omit<TagPagedRequest, 'page'>) => {
     return useInfiniteQuery({

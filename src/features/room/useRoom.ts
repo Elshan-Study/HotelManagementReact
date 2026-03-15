@@ -5,7 +5,7 @@ import {
     useQueryClient,
     keepPreviousData
 } from '@tanstack/react-query';
-import type { RoomQueryParams, CreateRoomDto, UpdateRoomDto } from './roomTypes.tsx';
+import type { RoomQueryParams, CreateRoomDto, UpdateRoomDto } from './roomTypes.ts';
 import {
     getRooms,
     getRoomById,
@@ -13,7 +13,7 @@ import {
     updateRoom,
     changeAvailability,
     deleteRoom
-} from './roomService.tsx';
+} from './roomService.ts';
 
 
 //Обычная пагинация (с кнопками)

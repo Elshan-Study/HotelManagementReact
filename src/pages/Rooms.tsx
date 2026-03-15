@@ -6,13 +6,13 @@ import { useInfiniteTags } from "../features/tag/useTag";
 import type { RoomTypeResponseDto } from "../features/roomType/roomTypeTypes";
 
 const SORT_OPTIONS = [
-    { value: "basePrice:asc", label: "Цена (сначала самая низкая)" },
+    { value: "basePrice:asc",  label: "Цена (сначала самая низкая)" },
     { value: "basePrice:desc", label: "Цена (сначала самая высокая)" },
-    { value: "name:asc", label: "Название (в алфавитном порядке)" },
-    { value: "name:desc", label: "Название (в обратном алфавитном порядке)" },
+    { value: "name:asc",       label: "Название (в алфавитном порядке)" },
+    { value: "name:desc",      label: "Название (в обратном алфавитном порядке)" },
 ];
 
-//Карточка типа комнаты
+// ─── RoomTypeCard ─────────────────────────────────────────────────────────────
 
 function RoomTypeCard({
                           roomType,
@@ -28,17 +28,18 @@ function RoomTypeCard({
     const hasDates = checkIn !== "" && checkOut !== "";
 
     const { data: priceData, isLoading: priceLoading } = usePriceCalculation(
-        hasDates
-            ? { roomTypeId: roomType.id, startDate: checkIn, endDate: checkOut }
-            : null
+        hasDates ? { roomTypeId: roomType.id, startDate: checkIn, endDate: checkOut } : null
     );
 
     const photo = roomType.photos[0]?.url;
-    const avgPrice = priceData ? Math.round(priceData.finalTotalPrice / nights) : null;
+    const avgPrice  = priceData && nights > 0 ? Math.round(priceData.finalTotalPrice / nights) : null;
     const totalPrice = priceData ? Math.round(priceData.finalTotalPrice) : null;
 
     return (
-        <Link to={`/rooms/${roomType.id}`} className="flex gap-4 bg-white border border-stone-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow">
+        <Link
+            to={`/rooms/${roomType.id}${hasDates ? `?checkIn=${checkIn}&checkOut=${checkOut}` : ""}`}
+            className="flex gap-4 bg-white border border-stone-200 rounded-2xl overflow-hidden hover:shadow-md transition-shadow"
+        >
             <div className="w-48 h-36 shrink-0 bg-stone-100">
                 {photo ? (
                     <img src={photo} alt={roomType.name} className="w-full h-full object-cover" />
@@ -51,21 +52,18 @@ function RoomTypeCard({
                 <div className="flex-1 min-w-0">
                     <h3 className="font-georgia font-bold text-stone-800 text-lg">{roomType.name}</h3>
                     <p className="text-stone-500 text-sm mt-1 line-clamp-1">
-                        {roomType.description.slice(0, 60)}...
+                        {roomType.description.slice(0, 80)}
                     </p>
                     {roomType.tags.length > 0 && (() => {
                         const visibleTags: typeof roomType.tags = [];
                         let totalChars = 0;
-
                         for (const tag of roomType.tags) {
                             if (visibleTags.length >= 4) break;
                             if (totalChars + tag.name.length > 50) break;
                             visibleTags.push(tag);
                             totalChars += tag.name.length;
                         }
-
                         const hiddenCount = roomType.tags.length - visibleTags.length;
-
                         return (
                             <div className="flex flex-wrap gap-1 mt-2">
                                 {visibleTags.map((tag) => (
@@ -74,7 +72,8 @@ function RoomTypeCard({
                                     </span>
                                 ))}
                                 {hiddenCount > 0 && (
-                                    <span className="text-xs bg-stone-100 text-stone-400 px-2 py-0.5 rounded-full">+{hiddenCount}
+                                    <span className="text-xs bg-stone-100 text-stone-400 px-2 py-0.5 rounded-full">
+                                        +{hiddenCount}
                                     </span>
                                 )}
                             </div>
@@ -106,7 +105,7 @@ function RoomTypeCard({
     );
 }
 
-//Боковая панель фильтров
+// ─── FiltersPanel ─────────────────────────────────────────────────────────────
 
 function FiltersPanel({
                           selectedTagIds,
@@ -129,7 +128,6 @@ function FiltersPanel({
     });
 
     const allTags = tagsData?.pages.flatMap((p) => p.items).filter(Boolean) ?? [];
-
     const observerTarget = useRef<HTMLDivElement>(null);
 
     const handleObserver = useCallback(
@@ -152,59 +150,30 @@ function FiltersPanel({
 
     return (
         <div className="w-56 shrink-0 flex flex-col gap-5">
-
-            {/* Фильтр по вместимости */}
+            {/* Вместимость */}
             <div className="bg-white border border-stone-200 rounded-2xl p-4 flex flex-col gap-3">
                 <h3 className="font-georgia font-semibold text-stone-700 text-sm">Вместимость</h3>
                 <div className="flex flex-col gap-2">
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs text-stone-400">Взрослые</label>
-                        <input
-                            type="number"
-                            min={1}
-                            value={adults}
-                            onChange={(e) => onAdultsChange(e.target.value)}
-                            placeholder="1"
-                            className="border border-stone-300 bg-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-amber-500 w-full"
-                        />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs text-stone-400">Дети</label>
-                        <input
-                            type="number"
-                            min={0}
-                            value={children}
-                            onChange={(e) => onChildrenChange(e.target.value)}
-                            placeholder="0"
-                            className="border border-stone-300 bg-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-amber-500 w-full"
-                        />
-                    </div>
+                    {([
+                        { label: "Взрослые", value: adults,   min: 1, setter: onAdultsChange },
+                        { label: "Дети",     value: children, min: 0, setter: onChildrenChange },
+                    ] as const).map(({ label, value, min, setter }) => (
+                        <div key={label} className="flex flex-col gap-1">
+                            <label className="text-xs text-stone-400">{label}</label>
+                            <input
+                                type="number"
+                                min={min}
+                                value={value}
+                                onChange={(e) => setter(e.target.value)}
+                                placeholder={String(min)}
+                                className="border border-stone-300 bg-white rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-amber-500 w-full"
+                            />
+                        </div>
+                    ))}
                 </div>
             </div>
 
-            {/* TODO: фильтр по цене — заглушка.
-                Сейчас не работает потому что фильтрация по basePrice некорректна
-                при наличии модификаторов цены (скидки/надбавки).
-                Будет реализовано после того как на беке появится эндпоинт
-                возвращающий типы комнат с уже рассчитанной итоговой ценой за период. */}
-            <div className="bg-white border border-stone-200 rounded-2xl p-4 flex flex-col gap-3">
-                <h3 className="font-georgia font-semibold text-stone-700 text-sm">Цена за ночь</h3>
-                <div className="flex flex-col gap-2 opacity-40 pointer-events-none">
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs text-stone-400">От</label>
-                        <input type="number" disabled placeholder="0"
-                               className="border border-stone-300 bg-stone-50 rounded-lg px-3 py-1.5 text-sm w-full" />
-                    </div>
-                    <div className="flex flex-col gap-1">
-                        <label className="text-xs text-stone-400">До</label>
-                        <input type="number" disabled placeholder="без лимита"
-                               className="border border-stone-300 bg-stone-50 rounded-lg px-3 py-1.5 text-sm w-full" />
-                    </div>
-                </div>
-                <p className="text-xs text-stone-400">Будет доступно после обновления</p>
-            </div>
-
-            {/* Фильтр по тегам */}
+            {/* Удобства */}
             <div className="bg-white border border-stone-200 rounded-2xl p-4 flex flex-col gap-3">
                 <h3 className="font-georgia font-semibold text-stone-700 text-sm">Удобства</h3>
                 <div className="flex flex-col gap-2">
@@ -232,7 +201,7 @@ function FiltersPanel({
     );
 }
 
-//Главная страница
+// ─── Rooms page ───────────────────────────────────────────────────────────────
 
 export default function Rooms() {
     const [searchParams] = useSearchParams();
@@ -241,21 +210,20 @@ export default function Rooms() {
     const [adults, setAdults] = useState("");
     const [children, setChildren] = useState("");
 
-    const checkIn = searchParams.get("checkIn") ?? "";
+    const checkIn  = searchParams.get("checkIn")  ?? "";
     const checkOut = searchParams.get("checkOut") ?? "";
-    const guests = Number(searchParams.get("guests") ?? 1);
+    const guests   = Number(searchParams.get("guests") ?? 1);
 
     const nights =
         checkIn && checkOut
-            ? Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24))
+            ? Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86_400_000)
             : 0;
 
-    // если заполнены взрослые/дети — используем их сумму, иначе guests из BookingBar
     const effectiveCapacity = adults || children
         ? (Number(adults) || 0) + (Number(children) || 0)
         : guests;
 
-    const effectiveMinAdults = adults ? Number(adults) : undefined;
+    const effectiveMinAdults   = adults   ? Number(adults)   : undefined;
     const effectiveMinChildren = children ? Number(children) : undefined;
 
     const handleTagToggle = (id: number) => {
@@ -264,24 +232,21 @@ export default function Rooms() {
         );
     };
 
-    const {
-        data,
-        isLoading,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-    } = useInfiniteRoomTypes({
-        pageSize: 10,
-        isActive: true,
-        minCapacity: effectiveCapacity,
-        minAdults: effectiveMinAdults,
-        minChildren: effectiveMinChildren,
-        tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
-        sortBy,
-    });
+    const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+        useInfiniteRoomTypes({
+            pageSize: 10,
+            isActive: true,
+            minCapacity:   effectiveCapacity,
+            minAdults:     effectiveMinAdults,
+            minChildren:   effectiveMinChildren,
+            tagIds:        selectedTagIds.length > 0 ? selectedTagIds : undefined,
+            sortBy,
+            // Передаём даты — бэк отфильтрует только доступные типы
+            checkIn:  checkIn  || undefined,
+            checkOut: checkOut || undefined,
+        });
 
     const allRoomTypes = data?.pages.flatMap((p) => p.items).filter(Boolean) ?? [];
-
     const observerTarget = useRef<HTMLDivElement>(null);
 
     const handleObserver = useCallback(
@@ -304,8 +269,6 @@ export default function Rooms() {
 
     return (
         <div className="flex gap-6 py-4">
-
-            {/* Левая колонка — фильтры */}
             <FiltersPanel
                 selectedTagIds={selectedTagIds}
                 onTagToggle={handleTagToggle}
@@ -315,13 +278,12 @@ export default function Rooms() {
                 onChildrenChange={setChildren}
             />
 
-            {/* Правая колонка — список */}
             <div className="flex-1 flex flex-col gap-4 min-w-0">
                 <div className="flex items-center justify-between">
                     <p className="text-stone-500 text-sm">
                         {isLoading
                             ? "Загрузка..."
-                            : `Найдено: ${data?.pages[0]?.totalCount ?? 0}`}
+                            : `Найдено: ${data?.pages[0]?.totalCount ?? 0}${checkIn && checkOut ? " (с учётом доступности)" : ""}`}
                     </p>
                     <select
                         value={sortBy}
@@ -335,11 +297,9 @@ export default function Rooms() {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    {isLoading && (
-                        [...Array(4)].map((_, i) => (
-                            <div key={i} className="h-36 rounded-2xl bg-stone-100 animate-pulse" />
-                        ))
-                    )}
+                    {isLoading && [...Array(4)].map((_, i) => (
+                        <div key={i} className="h-36 rounded-2xl bg-stone-100 animate-pulse" />
+                    ))}
 
                     {allRoomTypes.map((roomType) => (
                         <RoomTypeCard
@@ -363,7 +323,11 @@ export default function Rooms() {
                     {!isLoading && allRoomTypes.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-16">
                             <p className="font-georgia text-stone-600 text-lg">Номера не найдены</p>
-                            <p className="text-sm mt-1 text-stone-400">Попробуйте изменить параметры поиска</p>
+                            <p className="text-sm mt-1 text-stone-400">
+                                {checkIn && checkOut
+                                    ? "На выбранные даты свободных номеров нет"
+                                    : "Попробуйте изменить параметры поиска"}
+                            </p>
                         </div>
                     )}
                 </div>

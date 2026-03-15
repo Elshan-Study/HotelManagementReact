@@ -1,6 +1,6 @@
 import { api } from '../../api/axios';
-import type { TagResponseDto, CreateTagDto, TagPagedRequest } from './tagTypes';
-import type { PagedResult } from '../room/roomTypes';
+import type { TagResponseDto, CreateTagDto, TagPagedRequest } from './tagTypes.ts';
+import type { PagedResult } from '../room/roomTypes.ts';
 
 const API_URL = '/tags';
 

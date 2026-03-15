@@ -1,6 +1,6 @@
 // components/ui/RoomTypeDropdown.tsx
 import {useState, useCallback, useRef, useEffect} from "react";
-import { useInfiniteRoomTypes } from "../../features/roomType/useRoomTypes";
+import { useInfiniteRoomTypes } from "../../features/roomType/useRoomTypes.ts";
 // import type { RoomTypeResponseDto } from "../../features/roomType/roomTypeTypes";
 
 interface Props {
@@ -59,7 +59,7 @@ export default function RoomTypeDropdown({
             observerRef.current = new IntersectionObserver(
                 (entries) => {
                     if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-                        fetchNextPage();
+                        void fetchNextPage();
                     }
                 },
                 {

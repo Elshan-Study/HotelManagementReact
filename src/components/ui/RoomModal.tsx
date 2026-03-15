@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef } from "react";
-import { useCreateRoom, useUpdateRoom, useChangeAvailability } from "../../features/room/useRoom";
-import { useInfiniteRoomTypes } from "../../features/roomType/useRoomTypes";
-import type { RoomResponseDto } from "../../features/room/roomTypes";
+import { useCreateRoom, useUpdateRoom, useChangeAvailability } from "../../features/room/useRoom.ts";
+import { useInfiniteRoomTypes } from "../../features/roomType/useRoomTypes.ts";
+import type { RoomResponseDto } from "../../features/room/roomTypes.ts";
 
 interface Props {
     isOpen: boolean;

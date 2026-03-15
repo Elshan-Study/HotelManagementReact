@@ -10,7 +10,7 @@ import type {
     CreateRoomTypeWithPhotosDto,
     UpdateRoomTypeDto,
     AddPhotosDto,
-} from './roomTypeTypes.tsx';
+} from './roomTypeTypes.ts';
 import {
     getRoomsByTypeId,
     getRoomTypes,
@@ -20,9 +20,9 @@ import {
     deleteRoomType,
     addPhotos,
     deletePhoto,
-} from './roomTypeService.tsx';
+} from './roomTypeService.ts';
 
-import type { PagedRequest } from '../room/roomTypes.tsx'
+import type { PagedRequest } from '../room/roomTypes.ts'
 
 // QUERIES (чтение данных)
 

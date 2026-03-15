@@ -6,18 +6,6 @@ export interface RoomResponseDto {
     roomTypeId: number;
 }
 
-export interface RoomTypeResponseDto {
-    id: number;
-    code: string;
-    name: string;
-    description: string;
-    capacity: number;
-    basePrice: number;
-    isActive: boolean;
-    photos: RoomPhotoResponseDto[];
-    tags: TagResponseDto[];
-}
-
 export interface RoomPhotoResponseDto {
     id: number;
     url: string;

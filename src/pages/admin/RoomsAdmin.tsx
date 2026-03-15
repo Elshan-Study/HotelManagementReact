@@ -1,14 +1,14 @@
 // pages/admin/RoomsAdmin.tsx
 import { useState, useRef, useCallback, useEffect } from "react";
-import { useInfiniteRoomTypes } from "../../features/roomType/useRoomTypes";
-import { useInfiniteRooms, useDeleteRoom } from "../../features/room/useRoom";
-import { useInfiniteRoomsByTypeId } from "../../features/roomType/useRoomTypes";
+import { useInfiniteRoomTypes } from "../../features/roomType/useRoomTypes.ts";
+import { useInfiniteRooms, useDeleteRoom } from "../../features/room/useRoom.ts";
+import { useInfiniteRoomsByTypeId } from "../../features/roomType/useRoomTypes.ts";
 import RoomTypeDropdown from "../../components/ui/RoomTypeDropdown";
 import RoomListItem from "../../components/ui/RoomListItem";
 import RoomModal from "../../components/ui/RoomModal";
 import RoomTypeModal from "../../components/ui/RoomTypeModal";
-import type { RoomResponseDto } from "../../features/room/roomTypes";
-import type { RoomTypeResponseDto } from "../../features/roomType/roomTypeTypes";
+import type { RoomResponseDto } from "../../features/room/roomTypes.ts";
+import type { RoomTypeResponseDto } from "../../features/roomType/roomTypeTypes.ts";
 
 const RoomsAdmin = () => {
     const [selectedTypeId, setSelectedTypeId] = useState<number | null>(null);

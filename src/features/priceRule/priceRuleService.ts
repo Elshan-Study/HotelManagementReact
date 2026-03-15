@@ -9,7 +9,7 @@ import type {
     PriceCalculationResponseDto,
     PagedResult,
 } from './priceRuleTypes';
-import type {RoomTypeResponseDto} from "../roomType/roomTypeTypes.tsx";
+import type {RoomTypeResponseDto} from "../roomType/roomTypeTypes.ts";
 
 const URL = '/price-rules';
 

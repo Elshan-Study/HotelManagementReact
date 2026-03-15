@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../api/errorHandler';
-import { useRoomTypes } from '../../features/roomType/useRoomTypes';
+import { useRoomTypes } from '../../features/roomType/useRoomTypes.ts';
 import {
     usePriceRulesForPeriod,
     useAllPriceRules,
@@ -87,7 +87,7 @@ const PriceCalendar = () => {
         200,
         sortBy  // передаём сортировку
     );
-    const allRules = allRulesData?.items ?? [];
+    const allRules = useMemo(() => allRulesData?.items ?? [], [allRulesData?.items]);
 
     const activeRules = rulesData?.items ?? [];
 

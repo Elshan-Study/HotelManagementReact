@@ -8,7 +8,7 @@ import { Toaster } from 'react-hot-toast';
 import { store } from './store'
 import './index.css'
 import { router } from "../router.tsx";
-import { refresh } from './features/auth/authService.tsx';
+import { refresh } from './features/auth/authService.ts';
 import { setLoading, setUser } from './store/authSlice';
 
 // Создаём QueryClient

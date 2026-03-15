@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { useAuth } from "../../features/auth/useAuth";
+import { useAuth } from "../../features/auth/useAuth.ts";
 import Footer from "./Footer.tsx";
 import "../../index.css";
 

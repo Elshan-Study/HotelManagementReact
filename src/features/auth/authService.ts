@@ -1,5 +1,5 @@
 import { api } from "../../api/axios.tsx";
-import type { LoginRequest, AuthResponse, RegisterRequest } from "./authTypes.tsx";
+import type { LoginRequest, AuthResponse, RegisterRequest } from "./authTypes.ts";
 
 export const login = async (data: LoginRequest) => {
     const response = await api.post<AuthResponse>("/auth/login", data);
