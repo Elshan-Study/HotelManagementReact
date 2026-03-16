@@ -178,7 +178,10 @@ export default function Booking() {
                 items:         selectedItems.length > 0 ? selectedItems : undefined,
             },
             {
-                onSuccess: (res) => navigate(`/booking/${res.id}`),
+                onSuccess: (res) => {
+                    localStorage.setItem("pendingReservationId", res.id);
+                    navigate(`/booking/${res.id}`);
+                },
                 onError: (err: unknown) => {
                     const axiosErr = err as { response?: { status?: number; data?: { message?: string } } };
                     const isConflict = axiosErr?.response?.status === 409;

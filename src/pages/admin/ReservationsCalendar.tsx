@@ -373,23 +373,11 @@ export default function ReservationsCalendar() {
     // Единственный скролл-контейнер — тело таблицы.
     // Шапка дней синхронизируется через JS при скролле тела.
     const bodyRef      = useRef<HTMLDivElement>(null);  // единственный overflow-auto контейнер
-    const dayHdrRef    = useRef<HTMLDivElement>(null);  // шапка дней (overflow-x-hidden)
-    const isSyncing    = useRef(false);
-
-    // Синхронизируем шапку дней при горизонтальном скролле тела
-    const handleBodyScroll = () => {
-        if (isSyncing.current || !bodyRef.current || !dayHdrRef.current) return;
-        isSyncing.current = true;
-        dayHdrRef.current.scrollLeft = bodyRef.current.scrollLeft;
-        isSyncing.current = false;
-    };
 
     // Прокрутка к сегодня при смене месяца
     useEffect(() => {
         if (!bodyRef.current || todayOffset < 0) return;
-        const left = Math.max(0, todayOffset * COL_W - 80);
-        bodyRef.current.scrollLeft = left;
-        if (dayHdrRef.current) dayHdrRef.current.scrollLeft = left;
+        bodyRef.current.scrollLeft = Math.max(0, todayOffset * COL_W - 80);
     }, [viewStart, todayOffset]);
 
     const visibleRoomsCount = groups.reduce((n, g) => n + (collapsed.has(g.typeId) ? 0 : g.rooms.length), 0);
@@ -463,52 +451,50 @@ export default function ReservationsCalendar() {
                 <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden"
                      style={{ maxHeight: "calc(100vh - 220px)", display: "flex", flexDirection: "column" }}>
 
-                    {/* Шапка дней — sticky сверху, не скроллится вертикально */}
-                    <div className="flex shrink-0 border-b border-stone-200 bg-stone-50"
-                         style={{ position: "sticky", top: 0, zIndex: 20 }}>
-                        {/* Угол */}
-                        <div className="shrink-0 border-r border-stone-200 bg-stone-50 flex items-center px-3"
-                             style={{ width: LABEL_W, height: DAY_HDR_H }}>
-                            <span className="text-xs text-stone-400 font-medium uppercase tracking-wide">Тип · Комната</span>
-                        </div>
-                        {/* Числа и дни — скроллится только горизонтально, управляется JS */}
-                        <div className="flex-1 overflow-x-hidden" ref={dayHdrRef} style={{ scrollbarWidth: "none" }}>
-                            <div style={{ width: totalWidth, minWidth: totalWidth }}>
-                                <div className="flex" style={{ height: 32 }}>
-                                    {days.map((day, i) => {
-                                        const isToday   = toISO(day) === toISO(todayLocal);
-                                        const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                                        return (
-                                            <div key={i} title={`${DAYS_FULL[day.getDay()]}, ${day.toLocaleDateString("ru-RU")}`}
-                                                 className={`flex items-center justify-center text-xs border-r border-stone-100 shrink-0 ${isToday ? "bg-amber-100" : isWeekend ? "bg-stone-100/60" : ""}`}
-                                                 style={{ width: COL_W, height: 32 }}>
-                                                <span className={`font-medium ${isToday ? "text-amber-700" : isWeekend ? "text-red-500" : "text-stone-600"}`}>{day.getDate()}</span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                                <div className="flex" style={{ height: 24 }}>
-                                    {days.map((day, i) => {
-                                        const isToday   = toISO(day) === toISO(todayLocal);
-                                        const isWeekend = day.getDay() === 0 || day.getDay() === 6;
-                                        return (
-                                            <div key={i}
-                                                 className={`flex items-center justify-center text-xs border-r border-stone-100 shrink-0 ${isToday ? "bg-amber-100" : isWeekend ? "bg-stone-100/60" : ""}`}
-                                                 style={{ width: COL_W, height: 24 }}>
-                                                <span className={isToday ? "text-amber-600" : isWeekend ? "text-red-400" : "text-stone-400"}>{DAYS_SHORT[day.getDay()]}</span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Тело — ОДИН overflow:auto, скроллится и вертикально и горизонтально */}
-                    <div ref={bodyRef} onScroll={handleBodyScroll}
+                    {/* Единственный скролл-контейнер */}
+                    <div ref={bodyRef}
                          className="flex-1 overflow-auto"
                          style={{ scrollbarWidth: "thin" }}>
                         <div style={{ width: LABEL_W + totalWidth, minWidth: LABEL_W + totalWidth }}>
+
+                            {/* Шапка дней — sticky внутри скролл-контейнера, двигается вместе с горизонтальным скроллом автоматически */}
+                            <div className="flex border-b border-stone-200 bg-stone-50"
+                                 style={{ position: "sticky", top: 0, zIndex: 20, height: DAY_HDR_H }}>
+                                {/* Угол */}
+                                <div className="shrink-0 border-r border-stone-200 bg-stone-50 flex items-center px-3"
+                                     style={{ position: "sticky", left: 0, zIndex: 21, width: LABEL_W }}>
+                                    <span className="text-xs text-stone-400 font-medium uppercase tracking-wide">Тип · Комната</span>
+                                </div>
+                                {/* Дни — просто flex, скроллятся вместе с контейнером */}
+                                <div className="flex flex-col" style={{ width: totalWidth }}>
+                                    <div className="flex" style={{ height: 32 }}>
+                                        {days.map((day, i) => {
+                                            const isToday   = toISO(day) === toISO(todayLocal);
+                                            const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                                            return (
+                                                <div key={i} title={`${DAYS_FULL[day.getDay()]}, ${day.toLocaleDateString("ru-RU")}`}
+                                                     className={`flex items-center justify-center text-xs border-r border-stone-100 shrink-0 ${isToday ? "bg-amber-100" : isWeekend ? "bg-stone-100/60" : ""}`}
+                                                     style={{ width: COL_W, height: 32 }}>
+                                                    <span className={`font-medium ${isToday ? "text-amber-700" : isWeekend ? "text-red-500" : "text-stone-600"}`}>{day.getDate()}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="flex" style={{ height: 24 }}>
+                                        {days.map((day, i) => {
+                                            const isToday   = toISO(day) === toISO(todayLocal);
+                                            const isWeekend = day.getDay() === 0 || day.getDay() === 6;
+                                            return (
+                                                <div key={i}
+                                                     className={`flex items-center justify-center text-xs border-r border-stone-100 shrink-0 ${isToday ? "bg-amber-100" : isWeekend ? "bg-stone-100/60" : ""}`}
+                                                     style={{ width: COL_W, height: 24 }}>
+                                                    <span className={isToday ? "text-amber-600" : isWeekend ? "text-red-400" : "text-stone-400"}>{DAYS_SHORT[day.getDay()]}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
                             {groups.length === 0 ? (
                                 <div className="flex items-center justify-center py-16 text-stone-400 text-sm">Нет комнат в системе</div>
                             ) : groups.map((group) => {
@@ -559,8 +545,15 @@ export default function ReservationsCalendar() {
                                                         {todayOffset >= 0 && todayOffset < daysInMonth && (
                                                             <div className="absolute top-0 bottom-0 bg-amber-50/60 pointer-events-none" style={{ left: todayOffset * COL_W, width: COL_W, zIndex: 0 }} />
                                                         )}
-                                                        {/* Брони */}
-                                                        {roomRes.map((res) => {
+                                                        {/* Брони — отменённые рендерим первыми (под активными) */}
+                                                        {[...roomRes]
+                                                            .sort((a, b) => {
+                                                                const order: Record<ReservationStatus, number> = {
+                                                                    Cancelled: 0, Completed: 1, Pending: 2, Confirmed: 3,
+                                                                };
+                                                                return (order[a.status] ?? 0) - (order[b.status] ?? 0);
+                                                            })
+                                                            .map((res) => {
                                                             const rs = parseLocalDate(res.startDate);
                                                             const re = parseLocalDate(res.endDate);
                                                             const cs = rs < viewStart ? viewStart : rs;

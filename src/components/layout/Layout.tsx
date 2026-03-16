@@ -57,6 +57,8 @@ export default function Layout() {
     const { user, handleLogout } = useAuth();
     const location = useLocation();
     const showBooking = PAGES_WITH_BOOKING.includes(location.pathname);
+    const pendingId = localStorage.getItem("pendingReservationId");
+    const showPendingBanner = !!pendingId && !location.pathname.startsWith("/booking");
 
     return (
         <div className="min-h-screen flex flex-col">
@@ -93,6 +95,22 @@ export default function Layout() {
                     <Link to="/rooms" className="btn text-sm px-4 py-1.5 rounded-xl bg-amber-100 text-amber-800 font-medium">Rooms</Link>
                 </nav>
             </header>
+            {showPendingBanner && (
+                <div className="mx-10 mt-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-sm text-amber-700">У вас есть незавершённое бронирование</span>
+                    </div>
+                    <Link
+                        to={`/booking/${pendingId}`}
+                        className="text-sm font-medium text-amber-700 hover:text-amber-800 underline shrink-0"
+                    >
+                        Перейти к оплате
+                    </Link>
+                </div>
+            )}
             {showBooking && <BookingBar />}
             <main className="flex-1 container mx-auto p-4">
                 <Outlet />

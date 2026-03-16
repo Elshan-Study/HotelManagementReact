@@ -7,7 +7,10 @@ function useCountdown(target: string | null | undefined): number | null {
     const [seconds, setSeconds] = useState<number | null>(null);
     useEffect(() => {
         if (!target) { setSeconds(null); return; }
-        const calc = () => Math.max(0, Math.floor((new Date(target + "Z").getTime() - Date.now()) / 1000));
+        const calc = () => {
+            const t = target.endsWith("Z") ? target : target + "Z";
+            return Math.max(0, Math.floor((new Date(t).getTime() - Date.now()) / 1000));
+        };
         setSeconds(calc());
         const id = setInterval(() => setSeconds(calc()), 1000);
         return () => clearInterval(id);
@@ -24,6 +27,7 @@ export default function PaymentPage() {
 
     const countdown = useCountdown(reservation?.heldUntil);
     const status = reservation?.status;
+    const [payError, setPayError] = useState<string | null>(null);
 
     useEffect(() => {
         if (status === "Confirmed") {
@@ -31,20 +35,34 @@ export default function PaymentPage() {
         }
     }, [status, reservationId, navigate]);
 
+    useEffect(() => {
+        if (countdown !== null && countdown === 0) {
+            localStorage.removeItem("pendingReservationId");
+        }
+    }, [countdown]);
+
     const handlePay = (simulateSuccess: boolean) => {
         if (!reservationId) return;
         pay(
             { reservationId, simulateSuccess },
             {
                 onSuccess: (res) => {
-                    if (res.status === "Confirmed") navigate(`/booking/success/${reservationId}`);
+                    if (res.status === "Confirmed") {
+                        localStorage.removeItem("pendingReservationId");
+                        navigate(`/booking/success/${reservationId}`);
+                    }
                 },
                 onError: (err: unknown) => {
                     const code = (err as { response?: { data?: { code?: string } } })?.response?.data?.code;
                     if (code === "HOLD_EXPIRED") {
+                        localStorage.removeItem("pendingReservationId");
                         navigate("/rooms", {
                             state: { error: "Время удержания брони истекло. Пожалуйста, создайте новую бронь." },
                         });
+                    } else if (code === "PAYMENT_FAILED") {
+                        setPayError("Оплата не прошла. Проверьте данные карты и попробуйте снова.");
+                    } else {
+                        setPayError("Произошла ошибка. Попробуйте ещё раз.");
                     }
                 },
             }
@@ -69,7 +87,7 @@ export default function PaymentPage() {
         );
     }
 
-    const holdExpired = countdown === 0;
+    const holdExpired = countdown !== null && countdown === 0;
     const itemsTotal  = reservation.items.reduce((s, i) => s + i.total, 0);
 
     return (
@@ -186,6 +204,11 @@ export default function PaymentPage() {
                 </div>
 
                 <div className="flex flex-col gap-2">
+                    {payError && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+                            {payError}
+                        </div>
+                    )}
                     <button
                         onClick={() => handlePay(true)}
                         disabled={isPending || holdExpired}
