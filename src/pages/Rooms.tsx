@@ -12,13 +12,12 @@ const SORT_OPTIONS = [
     { value: "name:desc",      label: "Название (в обратном алфавитном порядке)" },
 ];
 
-// ─── RoomTypeCard ─────────────────────────────────────────────────────────────
+function getTagLabel(tag: { slug: string; translations: Record<string, string> }) {
+    return tag.translations["en"] ?? tag.slug;
+}
 
 function RoomTypeCard({
-                          roomType,
-                          checkIn,
-                          checkOut,
-                          nights,
+                          roomType, checkIn, checkOut, nights,
                       }: {
     roomType: RoomTypeResponseDto;
     checkIn: string;
@@ -32,7 +31,7 @@ function RoomTypeCard({
     );
 
     const photo = roomType.photos[0]?.url;
-    const avgPrice  = priceData && nights > 0 ? Math.round(priceData.finalTotalPrice / nights) : null;
+    const avgPrice   = priceData && nights > 0 ? Math.round(priceData.finalTotalPrice / nights) : null;
     const totalPrice = priceData ? Math.round(priceData.finalTotalPrice) : null;
 
     return (
@@ -59,16 +58,17 @@ function RoomTypeCard({
                         let totalChars = 0;
                         for (const tag of roomType.tags) {
                             if (visibleTags.length >= 4) break;
-                            if (totalChars + tag.name.length > 50) break;
+                            const label = getTagLabel(tag);
+                            if (totalChars + label.length > 50) break;
                             visibleTags.push(tag);
-                            totalChars += tag.name.length;
+                            totalChars += label.length;
                         }
                         const hiddenCount = roomType.tags.length - visibleTags.length;
                         return (
                             <div className="flex flex-wrap gap-1 mt-2">
                                 {visibleTags.map((tag) => (
                                     <span key={tag.id} className="text-xs bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
-                                        {tag.name}
+                                        {getTagLabel(tag)}
                                     </span>
                                 ))}
                                 {hiddenCount > 0 && (
@@ -105,15 +105,8 @@ function RoomTypeCard({
     );
 }
 
-// ─── FiltersPanel ─────────────────────────────────────────────────────────────
-
 function FiltersPanel({
-                          selectedTagIds,
-                          onTagToggle,
-                          adults,
-                          children,
-                          onAdultsChange,
-                          onChildrenChange,
+                          selectedTagIds, onTagToggle, adults, children, onAdultsChange, onChildrenChange,
                       }: {
     selectedTagIds: number[];
     onTagToggle: (id: number) => void;
@@ -124,7 +117,7 @@ function FiltersPanel({
 }) {
     const { data: tagsData, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteTags({
         pageSize: 50,
-        sortBy: "name:asc",
+        sortBy: "Slug:asc",
     });
 
     const allTags = tagsData?.pages.flatMap((p) => p.items).filter(Boolean) ?? [];
@@ -150,7 +143,6 @@ function FiltersPanel({
 
     return (
         <div className="w-56 shrink-0 flex flex-col gap-5">
-            {/* Вместимость */}
             <div className="bg-white border border-stone-200 rounded-2xl p-4 flex flex-col gap-3">
                 <h3 className="font-georgia font-semibold text-stone-700 text-sm">Вместимость</h3>
                 <div className="flex flex-col gap-2">
@@ -173,7 +165,6 @@ function FiltersPanel({
                 </div>
             </div>
 
-            {/* Удобства */}
             <div className="bg-white border border-stone-200 rounded-2xl p-4 flex flex-col gap-3">
                 <h3 className="font-georgia font-semibold text-stone-700 text-sm">Удобства</h3>
                 <div className="flex flex-col gap-2">
@@ -186,7 +177,7 @@ function FiltersPanel({
                                 className="w-4 h-4 rounded border-stone-300 accent-amber-600 cursor-pointer"
                             />
                             <span className="text-sm text-stone-600 group-hover:text-stone-800 transition-colors">
-                                {tag.name}
+                                {getTagLabel(tag)}
                             </span>
                         </label>
                     ))}
@@ -200,8 +191,6 @@ function FiltersPanel({
         </div>
     );
 }
-
-// ─── Rooms page ───────────────────────────────────────────────────────────────
 
 export default function Rooms() {
     const [searchParams] = useSearchParams();
@@ -219,10 +208,7 @@ export default function Rooms() {
             ? Math.round((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86_400_000)
             : 0;
 
-    const effectiveCapacity = adults || children
-        ? (Number(adults) || 0) + (Number(children) || 0)
-        : guests;
-
+    const effectiveCapacity    = adults || children ? (Number(adults) || 0) + (Number(children) || 0) : guests;
     const effectiveMinAdults   = adults   ? Number(adults)   : undefined;
     const effectiveMinChildren = children ? Number(children) : undefined;
 
@@ -241,7 +227,6 @@ export default function Rooms() {
             minChildren:   effectiveMinChildren,
             tagIds:        selectedTagIds.length > 0 ? selectedTagIds : undefined,
             sortBy,
-            // Передаём даты — бэк отфильтрует только доступные типы
             checkIn:  checkIn  || undefined,
             checkOut: checkOut || undefined,
         });

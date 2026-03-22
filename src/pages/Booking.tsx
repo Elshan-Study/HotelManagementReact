@@ -96,7 +96,7 @@ export default function Booking() {
     const { user } = useAuth();
     const [name,     setName]     = useState(user?.displayName ?? "");
     const [email,    setEmail]    = useState(user?.email       ?? "");
-    const [phone,    setPhone]    = useState("");
+    const [phone,    setPhone]    = useState(user?.phoneNumber ?? "");
     const [guests,   setGuests]   = useState("1");
     const [notes,    setNotes]    = useState("");
     const [errors,   setErrors]   = useState<Record<string, string>>({});
@@ -332,7 +332,7 @@ export default function Booking() {
                                 <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
-                                Имя и e-mail заполнены из вашего аккаунта
+                                Имя, e-mail и телефон заполнены из вашего аккаунта
                             </p>
                         )}
                         <div className="flex flex-col gap-1">

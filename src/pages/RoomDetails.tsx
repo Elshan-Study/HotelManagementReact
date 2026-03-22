@@ -165,7 +165,7 @@ export default function RoomDetails() {
                             <div className="flex flex-wrap gap-2">
                                 {roomType.tags.map((tag) => (
                                     <span key={tag.id} className="text-sm bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1 rounded-full">
-                                        {tag.name}
+                                        {tag.translations["en"] ?? tag.slug}
                                     </span>
                                 ))}
                             </div>

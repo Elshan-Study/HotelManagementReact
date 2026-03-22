@@ -1,12 +1,11 @@
 export interface TagResponseDto {
     id: number;
-    name: string;
     slug: string;
+    translations: Record<string, string>;
 }
 
 export interface CreateTagDto {
-    name: string;
-    slug: string;
+    translations: Record<string, string>;
 }
 
 export interface TagPagedRequest {

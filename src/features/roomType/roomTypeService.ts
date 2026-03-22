@@ -80,8 +80,12 @@ export const createRoomType = async (
     formData.append('name', roomTypeData.name);
     formData.append('description', roomTypeData.description);
     formData.append('capacity', roomTypeData.capacity.toString());
+    formData.append('maxOccupancyAdults', roomTypeData.maxOccupancyAdults.toString());
+    formData.append('maxOccupancyChildren', roomTypeData.maxOccupancyChildren.toString());
     formData.append('basePrice', roomTypeData.basePrice.toString());
     formData.append('isActive', roomTypeData.isActive.toString());
+
+
 
     if (roomTypeData.tagIds && roomTypeData.tagIds.length > 0) {
         roomTypeData.tagIds.forEach((tagId) => {

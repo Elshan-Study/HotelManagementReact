@@ -6,7 +6,7 @@ import { useRoomTypes } from "../features/roomType/useRoomTypes.ts";
 import { useDiscountedRoomTypes } from "../features/priceRule/usePriceRule.ts";
 import { Link } from "react-router-dom";
 
-// ─── Карточка услуги ─────────────────────────────────────────────────────────
+//Карточка услуги
 
 function ServiceCard({ icon, label, description }: { icon: string; label: string; description: string }) {
     return (
@@ -17,14 +17,36 @@ function ServiceCard({ icon, label, description }: { icon: string; label: string
                 </svg>
             </div>
             <div>
-                <p className="font-georgia font-semibold text-stone-800 text-base leading-tight">{label}</p>
+                <p style={{ fontFamily: "'Georgia', serif" }} className="font-semibold text-stone-800 text-base leading-tight">{label}</p>
                 <p className="text-stone-500 text-sm mt-1 leading-relaxed">{description}</p>
             </div>
         </div>
     );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
+//Кнопка с hover-эффектом
+
+function AnimatedLink({ to, className, children }: { to: string; className?: string; children: React.ReactNode }) {
+    return (
+        <Link
+            to={to}
+            className={className}
+            style={{ transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)" }}
+            onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.transform = "translateY(-1px)";
+                (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)";
+            }}
+            onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.transform = "";
+                (e.currentTarget as HTMLElement).style.boxShadow = "";
+            }}
+        >
+            {children}
+        </Link>
+    );
+}
+
+// Main
 
 export default function Home() {
     const { data: roomTypesData, isLoading: loadingGallery } = useRoomTypes({
@@ -68,7 +90,7 @@ export default function Home() {
             {/* О нас */}
             <section className="flex gap-10 items-center">
                 <div className="flex-1 flex flex-col gap-4">
-                    <h2 className="font-georgia text-3xl font-bold text-stone-800">
+                    <h2 style={{ fontFamily: "'Georgia', serif" }} className="text-3xl font-bold text-stone-800">
                         Добро пожаловать<br />в GrandHotel
                     </h2>
                     <p className="text-stone-600 leading-relaxed">
@@ -77,12 +99,12 @@ export default function Home() {
                     <p className="text-stone-600 leading-relaxed">
                         К услугам гостей просторные номера с панорамными видами, ресторан с авторской кухней, спа-центр с бассейном и фитнес-зал. Наша команда работает круглосуточно, чтобы каждый гость чувствовал себя желанным.
                     </p>
-                    <Link
+                    <AnimatedLink
                         to="/rooms"
-                        className="w-fit mt-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-6 py-2.5 text-sm font-medium transition-colors"
+                        className="w-fit mt-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl px-6 py-2.5 text-sm font-medium"
                     >
                         Смотреть номера
-                    </Link>
+                    </AnimatedLink>
                 </div>
 
                 <div className="shrink-0 grid grid-cols-2 gap-3 w-64">
@@ -93,7 +115,7 @@ export default function Home() {
                         { value: "10+",  label: "Лет опыта" },
                     ].map(({ value, label }) => (
                         <div key={label} className="bg-white border border-stone-200 rounded-2xl p-4 flex flex-col gap-1 text-center">
-                            <span className="font-georgia font-bold text-stone-800 text-2xl">{value}</span>
+                            <span style={{ fontFamily: "'Georgia', serif" }} className="font-bold text-stone-800 text-2xl">{value}</span>
                             <span className="text-stone-500 text-xs">{label}</span>
                         </div>
                     ))}
@@ -103,7 +125,7 @@ export default function Home() {
             {/* Спецпредложения / Премиум номера */}
             <section>
                 <div className="flex items-baseline gap-3 mb-4">
-                    <h2 className="font-georgia text-2xl font-bold text-stone-800">
+                    <h2 style={{ fontFamily: "'Georgia', serif" }} className="text-2xl font-bold text-stone-800">
                         {hasDiscounts ? "Спецпредложения" : "Премиум номера"}
                     </h2>
                     {hasDiscounts && (
@@ -124,7 +146,7 @@ export default function Home() {
 
             {/* Услуги */}
             <section>
-                <h2 className="font-georgia text-2xl font-bold text-stone-800 mb-1">Наши услуги</h2>
+                <h2 style={{ fontFamily: "'Georgia', serif" }} className="text-2xl font-bold text-stone-800 mb-1">Наши услуги</h2>
                 <p className="text-stone-500 text-sm mb-5">Всё для вашего комфортного отдыха</p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {services.map((s) => (
@@ -135,16 +157,16 @@ export default function Home() {
 
             {/* CTA */}
             <section className="bg-gradient-to-br from-stone-800 to-stone-900 rounded-2xl p-8 flex flex-col items-center gap-4 text-center">
-                <h2 className="font-georgia text-2xl font-bold text-white">Готовы к незабываемому отдыху?</h2>
+                <h2 style={{ fontFamily: "'Georgia', serif" }} className="text-2xl font-bold text-white">Готовы к незабываемому отдыху?</h2>
                 <p className="text-stone-400 text-sm max-w-md">
                     Забронируйте номер прямо сейчас и получите лучшую цену. Бесплатная отмена за 24 часа.
                 </p>
-                <Link
+                <AnimatedLink
                     to="/rooms"
-                    className="bg-amber-600 hover:bg-amber-500 text-white rounded-xl px-8 py-3 font-medium transition-colors"
+                    className="bg-amber-600 hover:bg-amber-500 text-white rounded-xl px-8 py-3 font-medium"
                 >
                     Забронировать номер
-                </Link>
+                </AnimatedLink>
             </section>
         </div>
     );

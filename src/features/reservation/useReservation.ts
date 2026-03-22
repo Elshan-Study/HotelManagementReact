@@ -6,6 +6,8 @@ import {
     updateReservation,
     cancelReservation,
     processMockPayment,
+    getMyReservations,    // ← добавить
+    cancelMyReservation,  // ← добавить
 } from './reservationService';
 import type {
     CreateReservationDto,
@@ -56,3 +58,20 @@ export const useCancelReservation = () => {
 
 export const useMockPayment = () =>
     useMutation({ mutationFn: (dto: MockPaymentDto) => processMockPayment(dto) });
+
+export const useMyReservations = (page: number, pageSize: number) =>
+    useQuery({
+        queryKey: ['myReservations', page, pageSize],
+        queryFn: () => getMyReservations(page, pageSize),
+        staleTime: 30_000,
+    });
+
+export const useCancelMyReservation = () => {
+    const qc = useQueryClient();
+    return useMutation({
+        mutationFn: (id: string) => cancelMyReservation(id),
+        onSuccess: () => {
+            void qc.invalidateQueries({ queryKey: ['myReservations'] });
+        },
+    });
+};

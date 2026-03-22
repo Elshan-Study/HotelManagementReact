@@ -21,7 +21,7 @@ export interface RoomPhotoResponseDto {
 
 export interface TagResponseDto {
     id: number;
-    name: string;
+    translations: Record<string, string>;
     slug: string;
 }
 

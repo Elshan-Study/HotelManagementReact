@@ -54,7 +54,7 @@ function BookingBar() {
 }
 
 export default function Layout() {
-    const { user, handleLogout } = useAuth();
+    const { user } = useAuth();
     const location = useLocation();
     const showBooking = PAGES_WITH_BOOKING.includes(location.pathname);
     const pendingId = localStorage.getItem("pendingReservationId");
@@ -73,17 +73,19 @@ export default function Layout() {
                         </button>
                         {user ? (
                             <div className="flex items-center gap-2">
-                                <span className="text-xs text-stone-500 hidden sm:block">{user.displayName}</span>
-                                <button onClick={handleLogout} className="btn text-xs bg-stone-800 text-white rounded-xl px-4 py-1.5">
-                                    Выход
-                                </button>
+                                <Link
+                                    to="/profile"
+                                    className="text-xs text-stone-600 hover:text-amber-600 transition-colors hidden sm:block font-medium"
+                                >
+                                    {user.displayName}
+                                </Link>
                             </div>
                         ) : (
                             <Link to="/auth/login" className="btn text-xs bg-amber-600 text-white rounded-xl px-4 py-1.5">
                                 Вход
                             </Link>
                         )}
-                        {user?.role === "Admin" && (
+                        {(user?.role === "Admin" || user?.role === "Moderator") && (
                             <Link to="/admin" className="btn text-xs bg-red-500 text-white rounded-xl px-4 py-1.5">
                                 Админ
                             </Link>

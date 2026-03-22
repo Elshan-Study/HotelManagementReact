@@ -13,8 +13,8 @@ export const useAuth = () => {
         dispatch(setUser(result));
     };
 
-    const handleRegister = async (email: string, displayName: string, password: string) => {
-        const result = await register({ email, displayName, password });
+    const handleRegister = async (email: string, displayName: string, password: string, phoneNumber?: string) => {
+        const result = await register({ email, displayName, password, phoneNumber });
         dispatch(setUser(result));
     };
 

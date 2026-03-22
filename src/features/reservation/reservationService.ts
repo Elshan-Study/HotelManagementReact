@@ -52,3 +52,16 @@ export const processMockPayment = async (dto: MockPaymentDto): Promise<Reservati
     const { data } = await api.post<ReservationResponseDto>(`${PAY}/mock`, dto);
     return data;
 };
+
+// GET /api/user/reservations — свои брони
+export const getMyReservations = async (page: number, pageSize: number): Promise<PagedResult<ReservationResponseDto>> => {
+    const { data } = await api.get<PagedResult<ReservationResponseDto>>('/user/reservations', {
+        params: { page, pageSize }
+    });
+    return data;
+};
+
+// POST /api/user/reservations/:id/cancel — отменить свою бронь
+export const cancelMyReservation = async (id: string): Promise<void> => {
+    await api.post(`/user/reservations/${id}/cancel`);
+};

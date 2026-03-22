@@ -4,9 +4,6 @@ import type { AuthResponse } from "../features/auth/authTypes.ts";
 
 interface AuthState {
     user: AuthResponse | null;
-    // Параметр isLoading нужен потому что у нас в main.tsx есть такая функция как "refresh(){ .then .... " которая при каждом обновлении страницы просит у сервера RefreshToken
-    // но и за того что сервер долго отвечает а реакт его не ждёт программа ведет себя не правильно
-    // и мы при помощи этой переменной не даем реакту обробатывать действие пока мы не получим ответ от сервера
     isLoading: boolean;
 }
 
@@ -23,6 +20,14 @@ const authSlice = createSlice({
             state.user = action.payload;
             state.isLoading = false;
         },
+        // Обновляем только email и displayName, не трогая токен
+        updateUserProfile(state, action: PayloadAction<{ email: string; displayName: string; phoneNumber?: string }>) {
+            if (state.user) {
+                state.user.email = action.payload.email;
+                state.user.displayName = action.payload.displayName;
+                state.user.phoneNumber = action.payload.phoneNumber;  // ← добавить
+            }
+        },
         logout(state) {
             state.user = null;
             state.isLoading = false;
@@ -33,5 +38,5 @@ const authSlice = createSlice({
     },
 });
 
-export const { setUser, logout, setLoading } = authSlice.actions;
+export const { setUser, updateUserProfile, logout, setLoading } = authSlice.actions;
 export default authSlice.reducer;

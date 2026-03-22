@@ -1,4 +1,3 @@
-// pages/admin/RoomsAdmin.tsx
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useInfiniteRoomTypes } from "../../features/roomType/useRoomTypes.ts";
 import { useInfiniteRooms, useDeleteRoom } from "../../features/room/useRoom.ts";
@@ -7,6 +6,7 @@ import RoomTypeDropdown from "../../components/ui/RoomTypeDropdown";
 import RoomListItem from "../../components/ui/RoomListItem";
 import RoomModal from "../../components/ui/RoomModal";
 import RoomTypeModal from "../../components/ui/RoomTypeModal";
+import TagsModal from "../../components/ui/TagsModal";
 import type { RoomResponseDto } from "../../features/room/roomTypes.ts";
 import type { RoomTypeResponseDto } from "../../features/roomType/roomTypeTypes.ts";
 
@@ -20,12 +20,13 @@ const RoomsAdmin = () => {
         data?: RoomResponseDto;
     }>({ isOpen: false, mode: "create" });
 
-
     const [roomTypeModalState, setRoomTypeModalState] = useState<{
         isOpen: boolean;
         mode: "create" | "edit";
         data?: RoomTypeResponseDto;
     }>({ isOpen: false, mode: "create" });
+
+    const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
 
     const { data: roomTypesData } = useInfiniteRoomTypes({
         pageSize: 5,
@@ -103,6 +104,7 @@ const RoomsAdmin = () => {
 
     return (
         <div className="h-full p-6 flex flex-col">
+            {/* Toolbar */}
             <div className="flex gap-4 mb-6 shrink-0">
                 <div className="flex-1">
                     <input
@@ -110,18 +112,33 @@ const RoomsAdmin = () => {
                         placeholder="Search rooms by number..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400"
+                        className="w-full px-4 py-2 border border-stone-300 rounded-lg focus:outline-none focus:border-stone-400"
                     />
                 </div>
 
+                {/* Tags Manager button */}
+
+
+                {/* Add Room button */}
                 <button
                     onClick={() => setRoomModalState({ isOpen: true, mode: "create" })}
-                    className="btn px-4 py-2 bg-blue-600 text-white rounded-lg transition-colors flex items-center gap-2"
+                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                     <span>Add Room</span>
+                </button>
+
+                <button
+                    onClick={() => setIsTagsModalOpen(true)}
+                    className="px-4 py-2 border border-stone-300 bg-white hover:border-stone-400 text-stone-600 rounded-lg transition-colors flex items-center gap-2 text-sm"
+                >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                              d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z" />
+                    </svg>
+                    <span>Tags</span>
                 </button>
 
                 <RoomTypeDropdown
@@ -133,10 +150,11 @@ const RoomsAdmin = () => {
                 />
             </div>
 
+            {/* Rooms list */}
             <div className="flex-1 overflow-y-auto pr-2">
                 <div className="space-y-3">
                     {isLoadingRooms && (
-                        <div className="text-center py-8 text-gray-500">Loading rooms...</div>
+                        <div className="text-center py-8 text-stone-500">Loading rooms...</div>
                     )}
 
                     {allRooms.map((room) => (
@@ -151,15 +169,15 @@ const RoomsAdmin = () => {
 
                     <div ref={observerTarget} className="py-4 text-center">
                         {isFetchingNextPage && (
-                            <div className="text-gray-500">Loading more rooms...</div>
+                            <div className="text-stone-500">Loading more rooms...</div>
                         )}
                         {!hasNextPage && allRooms.length > 0 && (
-                            <div className="text-gray-400">No more rooms to load</div>
+                            <div className="text-stone-400">No more rooms to load</div>
                         )}
                     </div>
 
                     {!isLoadingRooms && allRooms.length === 0 && (
-                        <div className="text-center py-12 text-gray-500">
+                        <div className="text-center py-12 text-stone-500">
                             <p>No rooms found</p>
                             <p className="text-sm mt-2">Try adjusting your search or filters</p>
                         </div>
@@ -167,6 +185,7 @@ const RoomsAdmin = () => {
                 </div>
             </div>
 
+            {/* Modals */}
             <RoomModal
                 isOpen={roomModalState.isOpen}
                 mode={roomModalState.mode}
@@ -180,6 +199,11 @@ const RoomsAdmin = () => {
                 mode={roomTypeModalState.mode}
                 initialData={roomTypeModalState.data}
                 onClose={() => setRoomTypeModalState({ isOpen: false, mode: "create" })}
+            />
+
+            <TagsModal
+                isOpen={isTagsModalOpen}
+                onClose={() => setIsTagsModalOpen(false)}
             />
         </div>
     );

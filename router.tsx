@@ -14,6 +14,7 @@ import ReservationsCalendar from "./src/pages/admin/ReservationsCalendar.tsx";
 import Users from "./src/pages/admin/Users.tsx";
 import ProtectedRoute from "./src/routes/ProtectedRoute.tsx";
 import NotFound from "./src/pages/NotFound.tsx";
+import ProfilePage from "./src/pages/ProfilePage.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -46,6 +47,7 @@ export const router = createBrowserRouter([
                 path: "/booking/success/:reservationId",
                 element: <BookingSuccess />
             },
+
         ]
     },
     {
@@ -53,8 +55,12 @@ export const router = createBrowserRouter([
         element: <Login />
     },
     {
+        path: "/profile",
+        element: <ProfilePage />
+    },
+    {
         path: "/admin",
-        element: <ProtectedRoute allowedRole="Admin" />,
+        element: <ProtectedRoute allowedRoles={["Admin", "Moderator"]} />,
         children: [
             {
                 path: "/admin",
