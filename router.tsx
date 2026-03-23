@@ -15,6 +15,7 @@ import Users from "./src/pages/admin/Users.tsx";
 import ProtectedRoute from "./src/routes/ProtectedRoute.tsx";
 import NotFound from "./src/pages/NotFound.tsx";
 import ProfilePage from "./src/pages/ProfilePage.tsx";
+import AuditLog from "./src/pages/admin/AuditLog.tsx";
 
 export const router = createBrowserRouter([
     {
@@ -81,6 +82,10 @@ export const router = createBrowserRouter([
                     {
                         path: "users",
                         element: <Users />
+                    },
+                    {
+                        path: "audit-log",
+                        element: <AuditLog />
                     }
                 ]
             }
