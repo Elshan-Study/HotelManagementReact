@@ -24,10 +24,7 @@ import {
 
 import type { PagedRequest } from '../room/roomTypes.ts'
 
-// QUERIES (чтение данных)
-
-
-
+// ─── Queries ──────────────────────────────────────────────────────────────────
 
 export const useRoomsByTypeId = (
     roomTypeId: number,
@@ -37,11 +34,11 @@ export const useRoomsByTypeId = (
         queryKey: ['rooms-by-type', roomTypeId, params],
         queryFn: () => getRoomsByTypeId(roomTypeId, params),
         placeholderData: keepPreviousData,
-        enabled: !!roomTypeId, // Запрос только если roomTypeId существует
+        enabled: !!roomTypeId, // only fetch when roomTypeId is defined
     });
 };
-//Получить список типов комнат (обычная пагинация)
 
+// Paginated query (page buttons)
 export const useRoomTypes = (params: RoomTypeFilterRequest) => {
     return useQuery({
         queryKey: ['room-types', params],
@@ -50,9 +47,7 @@ export const useRoomTypes = (params: RoomTypeFilterRequest) => {
     });
 };
 
-
- ///Получить список типов комнат (infinite scroll)
-
+// Infinite scroll query
 export const useInfiniteRoomTypes = (
     params: Omit<RoomTypeFilterRequest, 'page'>
 ) => {
@@ -70,7 +65,6 @@ export const useInfiniteRoomTypes = (
         initialPageParam: 1,
     });
 };
-
 
 export const useInfiniteRoomsByTypeId = (
     roomTypeId: number,
@@ -92,9 +86,6 @@ export const useInfiniteRoomsByTypeId = (
     });
 };
 
-
-// Получить один тип комнаты по ID
-
 export const useRoomType = (id: number) => {
     return useQuery({
         queryKey: ['room-type', id],
@@ -103,11 +94,9 @@ export const useRoomType = (id: number) => {
     });
 };
 
-// MUTATIONS (изменение данных)
+// ─── Mutations ────────────────────────────────────────────────────────────────
 
-/**
- * Создать тип комнаты (с фото)
- */
+// Create a room type (with photos)
 export const useCreateRoomType = () => {
     const queryClient = useQueryClient();
 
@@ -120,9 +109,7 @@ export const useCreateRoomType = () => {
     });
 };
 
-
-//Обновить тип комнаты (без фото)
-
+// Update a room type (without photos)
 export const useUpdateRoomType = () => {
     const queryClient = useQueryClient();
 
@@ -137,9 +124,7 @@ export const useUpdateRoomType = () => {
     });
 };
 
-
-//Удалить тип комнаты
-
+// Delete a room type
 export const useDeleteRoomType = () => {
     const queryClient = useQueryClient();
 
@@ -152,13 +137,9 @@ export const useDeleteRoomType = () => {
     });
 };
 
+// ─── Photo mutations ──────────────────────────────────────────────────────────
 
-// PHOTO MUTATIONS
-
-
-
-// Добавить фото к существующему типу комнаты
-
+// Add photos to an existing room type
 export const useAddPhotos = () => {
     const queryClient = useQueryClient();
 
@@ -175,9 +156,7 @@ export const useAddPhotos = () => {
     });
 };
 
-
-// Удалить фото
-
+// Delete a photo
 export const useDeletePhoto = () => {
     const queryClient = useQueryClient();
 

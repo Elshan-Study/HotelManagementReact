@@ -16,7 +16,7 @@ import {
 } from './roomService.ts';
 
 
-//Обычная пагинация (с кнопками)
+// Paginated query (page buttons)
 export const useRooms = (params: RoomQueryParams) => {
     return useQuery({
         queryKey: ['rooms', params],
@@ -26,19 +26,17 @@ export const useRooms = (params: RoomQueryParams) => {
 };
 
 
-//Infinite Scroll (бесконечная прокрутка)
+// Infinite scroll query
 export const useInfiniteRooms = (params: Omit<RoomQueryParams, 'page'>) => {
     return useInfiniteQuery({
         queryKey: ['rooms-infinite', params],
         queryFn: ({ pageParam = 1 }) =>
             getRooms({ ...params, page: pageParam }),
 
-        // Функция для получения следующей страницы
+        // Returns the next page number, or undefined when all pages are loaded
         getNextPageParam: (lastPage) => {
             const { page, pageSize, totalCount } = lastPage;
             const totalPages = Math.ceil(totalCount / pageSize);
-
-            // Если есть ещё страницы - вернуть номер следующей
             return page < totalPages ? page + 1 : undefined;
         },
 
@@ -105,5 +103,6 @@ export const useDeleteRoom = () => {
             void queryClient.invalidateQueries({ queryKey: ['rooms'] });
             void queryClient.invalidateQueries({ queryKey: ['rooms-infinite'] });
         },
+        meta: { skipGlobalError: true }
     });
 };

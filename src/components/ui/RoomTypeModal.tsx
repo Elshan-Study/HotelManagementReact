@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useCreateRoomType, useUpdateRoomType, useAddPhotos, useDeletePhoto } from "../../features/roomType/useRoomTypes.ts";
 import { useInfiniteTags } from "../../features/tag/useTag.ts";
 import type { RoomTypeResponseDto } from "../../features/roomType/roomTypeTypes.ts";
@@ -11,6 +12,8 @@ interface Props {
 }
 
 export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Props) {
+    const { t } = useTranslation();
+
     const [code, setCode] = useState(initialData?.code ?? "");
     const [name, setName] = useState(initialData?.name ?? "");
     const [description, setDescription] = useState(initialData?.description ?? "");
@@ -163,7 +166,7 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 shrink-0">
                     <h2 className="text-xl font-semibold">
-                        {mode === "create" ? "Add Room Type" : "Edit Room Type"}
+                        {mode === "create" ? t("roomTypeModal.addTitle") : t("roomTypeModal.editTitle")}
                     </h2>
                     <button onClick={handleClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                         <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,20 +181,20 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                     {/* Code + Name */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1">
-                            <label className="text-sm font-medium text-gray-700">Code</label>
+                            <label className="text-sm font-medium text-gray-700">{t("roomTypeModal.code")}</label>
                             <input
                                 value={code}
                                 onChange={(e) => setCode(e.target.value)}
-                                placeholder="e.g. DELUXE"
+                                placeholder={t("roomTypeModal.codePlaceholder")}
                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
                         <div className="flex flex-col gap-1">
-                            <label className="text-sm font-medium text-gray-700">Name</label>
+                            <label className="text-sm font-medium text-gray-700">{t("roomTypeModal.name")}</label>
                             <input
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="e.g. Deluxe Room"
+                                placeholder={t("roomTypeModal.namePlaceholder")}
                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
@@ -199,11 +202,11 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
 
                     {/* Description */}
                     <div className="flex flex-col gap-1">
-                        <label className="text-sm font-medium text-gray-700">Description</label>
+                        <label className="text-sm font-medium text-gray-700">{t("roomTypeModal.description")}</label>
                         <textarea
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Describe the room type..."
+                            placeholder={t("roomTypeModal.descriptionPlaceholder")}
                             rows={3}
                             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                         />
@@ -212,37 +215,34 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                     {/* Occupancy + Price + Status */}
                     <div className="grid grid-cols-4 gap-4">
                         <div className="flex flex-col gap-1">
-                            <label className="text-sm font-medium text-gray-700">Adults</label>
+                            <label className="text-sm font-medium text-gray-700">{t("roomTypeModal.adults")}</label>
                             <input
                                 type="number" min={1}
                                 value={maxOccupancyAdults}
                                 onChange={(e) => setMaxOccupancyAdults(e.target.value)}
-                                placeholder="e.g. 2"
                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
                         <div className="flex flex-col gap-1">
-                            <label className="text-sm font-medium text-gray-700">Children</label>
+                            <label className="text-sm font-medium text-gray-700">{t("roomTypeModal.children")}</label>
                             <input
                                 type="number" min={0}
                                 value={maxOccupancyChildren}
                                 onChange={(e) => setMaxOccupancyChildren(e.target.value)}
-                                placeholder="e.g. 1"
                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
                         <div className="flex flex-col gap-1">
-                            <label className="text-sm font-medium text-gray-700">Base Price</label>
+                            <label className="text-sm font-medium text-gray-700">{t("roomTypeModal.basePrice")}</label>
                             <input
                                 type="number" min={0}
                                 value={basePrice}
                                 onChange={(e) => setBasePrice(e.target.value)}
-                                placeholder="e.g. 150"
                                 className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
                         <div className="flex flex-col gap-1">
-                            <label className="text-sm font-medium text-gray-700">Status</label>
+                            <label className="text-sm font-medium text-gray-700">{t("roomTypeModal.status")}</label>
                             <button
                                 onClick={() => setIsActive((v) => !v)}
                                 className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
@@ -251,14 +251,14 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                                         : "bg-red-50 border-red-300 text-red-700"
                                 }`}
                             >
-                                {isActive ? "Active" : "Inactive"}
+                                {isActive ? t("roomTypeModal.active") : t("roomTypeModal.inactive")}
                             </button>
                         </div>
                     </div>
 
-                    {/* Tags — select only, creation is in Tags Manager */}
+                    {/* Tags */}
                     <div className="flex flex-col gap-1">
-                        <label className="text-sm font-medium text-gray-700">Tags</label>
+                        <label className="text-sm font-medium text-gray-700">{t("roomTypeModal.tags")}</label>
 
                         {/* Selected tag pills */}
                         {selectedTagIds.length > 0 && (
@@ -292,7 +292,7 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                                 value={tagSearch}
                                 onChange={(e) => { setTagSearch(e.target.value); setIsTagDropdownOpen(true); }}
                                 onFocus={() => setIsTagDropdownOpen(true)}
-                                placeholder="Search and select tags..."
+                                placeholder={t("roomTypeModal.searchTags")}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none"
                             />
                             <button
@@ -310,12 +310,12 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                             {isTagDropdownOpen && (
                                 <div className="tag-dropdown-scroll hide-scrollbar absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg z-10 overflow-y-auto max-h-44">
                                     {isLoadingTags && (
-                                        <div className="px-4 py-3 text-sm text-gray-500">Loading tags...</div>
+                                        <div className="px-4 py-3 text-sm text-gray-500">{t("roomTypeModal.loadingTags")}</div>
                                     )}
                                     {!isLoadingTags && allTags.length === 0 && (
                                         <div className="px-4 py-3 text-sm text-gray-400 text-center">
-                                            No tags found. Create them in the{" "}
-                                            <span className="text-blue-500 font-medium">Tags manager</span>.
+                                            {t("roomTypeModal.noTags")}{" "}
+                                            <span className="text-blue-500 font-medium">{t("roomTypeModal.tagsManager")}</span>.
                                         </div>
                                     )}
                                     {allTags.map((tag) => (
@@ -336,7 +336,7 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                                     ))}
                                     <div ref={tagInfiniteScrollRef} className="py-1 text-center">
                                         {isFetchingNextTagPage && (
-                                            <div className="text-xs text-gray-400 py-1">Loading more...</div>
+                                            <div className="text-xs text-gray-400 py-1">{t("common.loadingMore")}</div>
                                         )}
                                     </div>
                                 </div>
@@ -347,7 +347,7 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
 
                     {/* Photos */}
                     <div className="flex flex-col gap-2">
-                        <label className="text-sm font-medium text-gray-700">Photos</label>
+                        <label className="text-sm font-medium text-gray-700">{t("roomTypeModal.photos")}</label>
 
                         {visibleExistingPhotos.length > 0 && (
                             <div className="flex flex-wrap gap-2">
@@ -400,7 +400,7 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                             <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
-                            <span className="text-sm text-gray-500">Add photos</span>
+                            <span className="text-sm text-gray-500">{t("roomTypeModal.addPhotos")}</span>
                             <input
                                 type="file" multiple accept=".jpg,.jpeg,.png,.webp"
                                 className="hidden"
@@ -416,7 +416,7 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                         onClick={handleClose}
                         className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                        Cancel
+                        {t("roomTypeModal.cancel")}
                     </button>
                     <button
                         onClick={() => void handleSubmit()}
@@ -424,8 +424,8 @@ export default function RoomTypeModal({ isOpen, mode, initialData, onClose }: Pr
                         className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isPending
-                            ? (mode === "create" ? "Creating..." : "Saving...")
-                            : (mode === "create" ? "Create Room Type" : "Save Changes")
+                            ? (mode === "create" ? t("roomTypeModal.creating") : t("roomTypeModal.saving"))
+                            : (mode === "create" ? t("roomTypeModal.createButton") : t("roomTypeModal.saveButton"))
                         }
                     </button>
                 </div>

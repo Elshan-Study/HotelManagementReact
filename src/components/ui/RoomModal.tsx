@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useCreateRoom, useUpdateRoom, useChangeAvailability } from "../../features/room/useRoom.ts";
 import { useInfiniteRoomTypes } from "../../features/roomType/useRoomTypes.ts";
 import type { RoomResponseDto } from "../../features/room/roomTypes.ts";
@@ -11,6 +12,8 @@ interface Props {
 }
 
 function RoomModalContent({ mode, initialData, onClose }: Omit<Props, "isOpen">) {
+    const { t } = useTranslation();
+
     const [formData, setFormData] = useState({
         number: initialData?.number ?? "",
         floor: initialData ? String(initialData.floor) : "",
@@ -61,36 +64,31 @@ function RoomModalContent({ mode, initialData, onClose }: Omit<Props, "isOpen">)
     const handleSubmit = async () => {
         if (!formData.roomTypeId) return;
 
-        try {
-            if (mode === "create") {
-                await createMutation.mutateAsync({
+        if (mode === "create") {
+            await createMutation.mutateAsync({
+                number: formData.number,
+                floor: Number(formData.floor),
+                roomTypeId: formData.roomTypeId,
+            });
+        } else if (initialData) {
+            await updateMutation.mutateAsync({
+                id: initialData.id,
+                data: {
                     number: formData.number,
                     floor: Number(formData.floor),
                     roomTypeId: formData.roomTypeId,
-                });
-            } else if (initialData) {
-                await updateMutation.mutateAsync({
                     id: initialData.id,
-                    data: {
-                        number: formData.number,
-                        floor: Number(formData.floor),
-                        roomTypeId: formData.roomTypeId,
-                        id: initialData.id,
-                    },
+                },
+            });
+
+            if (formData.isAvailable !== initialData.isAvailable) {
+                await changeAvailabilityMutation.mutateAsync({
+                    id: initialData.id,
+                    isAvailable: formData.isAvailable,
                 });
-
-                if (formData.isAvailable !== initialData.isAvailable) {
-                    await changeAvailabilityMutation.mutateAsync({
-                        id: initialData.id,
-                        isAvailable: formData.isAvailable,
-                    });
-                }
             }
-
-            onClose();
-        } catch (error) {
-            console.error("Failed to save room:", error);
         }
+        onClose();
     };
 
     const isPending =
@@ -114,7 +112,7 @@ function RoomModalContent({ mode, initialData, onClose }: Omit<Props, "isOpen">)
             >
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-semibold">
-                        {mode === "create" ? "Add New Room" : "Edit Room"}
+                        {mode === "create" ? t("roomModal.addTitle") : t("roomModal.editTitle")}
                     </h2>
                     <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
                         <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,23 +122,23 @@ function RoomModalContent({ mode, initialData, onClose }: Omit<Props, "isOpen">)
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700">Room Number</label>
+                    <label className="text-sm font-medium text-gray-700">{t("roomModal.roomNumber")}</label>
                     <input
                         type="text"
                         value={formData.number}
                         onChange={(e) => setFormData((prev) => ({ ...prev, number: e.target.value }))}
-                        placeholder="e.g. 101"
+                        placeholder={t("roomModal.roomNumberPlaceholder")}
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
 
                 <div className="flex flex-col gap-1">
-                    <label className="text-sm font-medium text-gray-700">Floor</label>
+                    <label className="text-sm font-medium text-gray-700">{t("roomModal.floor")}</label>
                     <input
                         type="number"
                         value={formData.floor}
                         onChange={(e) => setFormData((prev) => ({ ...prev, floor: e.target.value }))}
-                        placeholder="e.g. 3"
+                        placeholder={t("roomModal.floorPlaceholder")}
                         min={1}
                         className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -148,7 +146,7 @@ function RoomModalContent({ mode, initialData, onClose }: Omit<Props, "isOpen">)
 
                 <div className="flex flex-col gap-1">
                     <label className="text-sm font-medium text-gray-700">
-                        Room Type <span className="text-red-500">*</span>
+                        {t("roomModal.roomType")} <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
                         <button
@@ -160,7 +158,7 @@ function RoomModalContent({ mode, initialData, onClose }: Omit<Props, "isOpen">)
                             } focus:outline-none`}
                         >
                             <span className={selectedTypeName ? "text-gray-900" : "text-gray-400"}>
-                                {selectedTypeName ?? "Select room type..."}
+                                {selectedTypeName ?? t("roomModal.selectRoomType")}
                             </span>
                             <svg
                                 className={`w-5 h-5 transition-transform text-gray-500 ${
@@ -170,12 +168,7 @@ function RoomModalContent({ mode, initialData, onClose }: Omit<Props, "isOpen">)
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 9l-7 7-7-7"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
 
@@ -185,7 +178,7 @@ function RoomModalContent({ mode, initialData, onClose }: Omit<Props, "isOpen">)
                                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                             >
                                 {isLoadingTypes && (
-                                    <div className="px-4 py-3 text-gray-500 text-sm">Loading types...</div>
+                                    <div className="px-4 py-3 text-gray-500 text-sm">{t("roomModal.loadingTypes")}</div>
                                 )}
                                 {allRoomTypes.map((type) => (
                                     <button
@@ -199,28 +192,28 @@ function RoomModalContent({ mode, initialData, onClose }: Omit<Props, "isOpen">)
                                         }`}
                                     >
                                         <span>{type.name}</span>
-                                        <span className="text-xs text-gray-400">${type.basePrice}/night</span>
+                                        <span className="text-xs text-gray-400">{type.basePrice}{t("roomModal.perNight")}</span>
                                     </button>
                                 ))}
                                 <div ref={typeDropdownTriggerRef} className="py-1 text-center">
                                     {isFetchingNextPage && (
-                                        <div className="text-xs text-gray-400 py-1">Loading more...</div>
+                                        <div className="text-xs text-gray-400 py-1">{t("roomModal.loadingMore")}</div>
                                     )}
                                 </div>
                             </div>
                         )}
                     </div>
                     {!formData.roomTypeId && (
-                        <p className="text-xs text-red-500">Room type is required</p>
+                        <p className="text-xs text-red-500">{t("roomModal.roomTypeRequired")}</p>
                     )}
                 </div>
 
                 {mode === "edit" && (
                     <div className="flex flex-col gap-1">
-                        <label className="text-sm font-medium text-gray-700">Availability</label>
+                        <label className="text-sm font-medium text-gray-700">{t("roomModal.availability")}</label>
                         <div className="flex items-center justify-between px-4 py-2 border border-gray-300 rounded-lg">
                             <span className="text-sm text-gray-500">
-                                {formData.isAvailable ? "Available for booking" : "Not available"}
+                                {formData.isAvailable ? t("roomModal.availableForBooking") : t("roomModal.notAvailable")}
                             </span>
                             <button
                                 onClick={() =>
@@ -245,7 +238,7 @@ function RoomModalContent({ mode, initialData, onClose }: Omit<Props, "isOpen">)
                         onClick={onClose}
                         className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                        Cancel
+                        {t("roomModal.cancel")}
                     </button>
                     <button
                         onClick={() => void handleSubmit()}
@@ -253,12 +246,8 @@ function RoomModalContent({ mode, initialData, onClose }: Omit<Props, "isOpen">)
                         className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isPending
-                            ? mode === "create"
-                                ? "Creating..."
-                                : "Saving..."
-                            : mode === "create"
-                                ? "Create Room"
-                                : "Save Changes"}
+                            ? (mode === "create" ? t("roomModal.creating") : t("roomModal.saving"))
+                            : (mode === "create" ? t("roomModal.createRoom") : t("roomModal.saveChanges"))}
                     </button>
                 </div>
             </div>

@@ -22,6 +22,13 @@ export function formatDateShort(iso: string): string {
     });
 }
 
+export const breakLongWords = (text: string, maxLen = 15): string =>
+    text.split(" ").map((word) =>
+        word.length > maxLen
+            ? word.match(new RegExp(`.{1,${maxLen}}`, "g"))?.join("\u200B") ?? word
+            : word
+    ).join(" ");
+
 // "YYYY-MM-DD" от Date
 export function toISODate(date: Date): string {
     return date.toISOString().split("T")[0];

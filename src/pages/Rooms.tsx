@@ -1,19 +1,13 @@
 import { useSearchParams, Link } from "react-router-dom";
 import { useRef, useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useInfiniteRoomTypes } from "../features/roomType/useRoomTypes";
 import { usePriceCalculation } from "../features/priceRule/usePriceRule";
 import { useInfiniteTags } from "../features/tag/useTag";
 import type { RoomTypeResponseDto } from "../features/roomType/roomTypeTypes";
 
-const SORT_OPTIONS = [
-    { value: "basePrice:asc",  label: "Цена (сначала самая низкая)" },
-    { value: "basePrice:desc", label: "Цена (сначала самая высокая)" },
-    { value: "name:asc",       label: "Название (в алфавитном порядке)" },
-    { value: "name:desc",      label: "Название (в обратном алфавитном порядке)" },
-];
-
-function getTagLabel(tag: { slug: string; translations: Record<string, string> }) {
-    return tag.translations["en"] ?? tag.slug;
+function getTagLabel(tag: { slug: string; translations: Record<string, string> }, lang: string) {
+    return tag.translations[lang] ?? tag.translations["en"] ?? tag.slug;
 }
 
 function RoomTypeCard({
@@ -24,6 +18,7 @@ function RoomTypeCard({
     checkOut: string;
     nights: number;
 }) {
+    const { t, i18n } = useTranslation();
     const hasDates = checkIn !== "" && checkOut !== "";
 
     const { data: priceData, isLoading: priceLoading } = usePriceCalculation(
@@ -33,6 +28,12 @@ function RoomTypeCard({
     const photo = roomType.photos[0]?.url;
     const avgPrice   = priceData && nights > 0 ? Math.round(priceData.finalTotalPrice / nights) : null;
     const totalPrice = priceData ? Math.round(priceData.finalTotalPrice) : null;
+
+    const nightsLabel = (() => {
+        if (nights === 1) return t("booking.nights_one", { count: 1 });
+        if (nights < 5)   return t("booking.nights_few", { count: nights });
+        return t("booking.nights_many", { count: nights });
+    })();
 
     return (
         <Link
@@ -51,14 +52,14 @@ function RoomTypeCard({
                 <div className="flex-1 min-w-0">
                     <h3 className="font-georgia font-bold text-stone-800 text-lg">{roomType.name}</h3>
                     <p className="text-stone-500 text-sm mt-1 line-clamp-1">
-                        {roomType.description.slice(0, 80)}
+                        {roomType.description?.slice(0, 80)}
                     </p>
                     {roomType.tags.length > 0 && (() => {
                         const visibleTags: typeof roomType.tags = [];
                         let totalChars = 0;
                         for (const tag of roomType.tags) {
                             if (visibleTags.length >= 4) break;
-                            const label = getTagLabel(tag);
+                            const label = getTagLabel(tag, i18n.language);
                             if (totalChars + label.length > 50) break;
                             visibleTags.push(tag);
                             totalChars += label.length;
@@ -68,7 +69,7 @@ function RoomTypeCard({
                             <div className="flex flex-wrap gap-1 mt-2">
                                 {visibleTags.map((tag) => (
                                     <span key={tag.id} className="text-xs bg-stone-100 text-stone-500 px-2 py-0.5 rounded-full">
-                                        {getTagLabel(tag)}
+                                        {getTagLabel(tag, i18n.language)}
                                     </span>
                                 ))}
                                 {hiddenCount > 0 && (
@@ -83,21 +84,21 @@ function RoomTypeCard({
 
                 <div className="shrink-0 text-right min-w-32">
                     {!hasDates ? (
-                        <p className="text-stone-400 text-sm">Выберите даты<br />для расчёта цены</p>
+                        <p className="text-stone-400 text-sm whitespace-pre-line">{t("rooms.chooseDatesForPrice")}</p>
                     ) : priceLoading ? (
                         <div className="w-28 h-10 bg-stone-100 animate-pulse rounded-lg" />
                     ) : avgPrice !== null ? (
                         <>
                             <div className="text-amber-700 font-bold text-xl">
                                 {avgPrice}₼
-                                <span className="text-sm font-normal text-stone-400"> / ночь</span>
+                                <span className="text-sm font-normal text-stone-400"> {t("rooms.perNight")}</span>
                             </div>
                             <div className="text-stone-400 text-xs mt-0.5">
-                                итого {totalPrice}₼ за {nights} {nights === 1 ? "ночь" : nights < 5 ? "ночи" : "ночей"}
+                                {t("rooms.totalFor", { price: totalPrice, nights: nightsLabel })}
                             </div>
                         </>
                     ) : (
-                        <p className="text-stone-400 text-sm">Цена недоступна</p>
+                        <p className="text-stone-400 text-sm">{t("rooms.priceUnavailable")}</p>
                     )}
                 </div>
             </div>
@@ -115,6 +116,7 @@ function FiltersPanel({
     onAdultsChange: (v: string) => void;
     onChildrenChange: (v: string) => void;
 }) {
+    const { t, i18n } = useTranslation();
     const { data: tagsData, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteTags({
         pageSize: 50,
         sortBy: "Slug:asc",
@@ -144,11 +146,11 @@ function FiltersPanel({
     return (
         <div className="w-56 shrink-0 flex flex-col gap-5">
             <div className="bg-white border border-stone-200 rounded-2xl p-4 flex flex-col gap-3">
-                <h3 className="font-georgia font-semibold text-stone-700 text-sm">Вместимость</h3>
+                <h3 className="font-georgia font-semibold text-stone-700 text-sm">{t("rooms.filters.capacity")}</h3>
                 <div className="flex flex-col gap-2">
                     {([
-                        { label: "Взрослые", value: adults,   min: 1, setter: onAdultsChange },
-                        { label: "Дети",     value: children, min: 0, setter: onChildrenChange },
+                        { label: t("rooms.filters.adults"),   value: adults,   min: 1, setter: onAdultsChange },
+                        { label: t("rooms.filters.children"), value: children, min: 0, setter: onChildrenChange },
                     ] as const).map(({ label, value, min, setter }) => (
                         <div key={label} className="flex flex-col gap-1">
                             <label className="text-xs text-stone-400">{label}</label>
@@ -166,7 +168,7 @@ function FiltersPanel({
             </div>
 
             <div className="bg-white border border-stone-200 rounded-2xl p-4 flex flex-col gap-3">
-                <h3 className="font-georgia font-semibold text-stone-700 text-sm">Удобства</h3>
+                <h3 className="font-georgia font-semibold text-stone-700 text-sm">{t("rooms.filters.amenities")}</h3>
                 <div className="flex flex-col gap-2">
                     {allTags.map((tag) => (
                         <label key={tag.id} className="flex items-center gap-2 cursor-pointer group">
@@ -177,13 +179,13 @@ function FiltersPanel({
                                 className="w-4 h-4 rounded border-stone-300 accent-amber-600 cursor-pointer"
                             />
                             <span className="text-sm text-stone-600 group-hover:text-stone-800 transition-colors">
-                                {getTagLabel(tag)}
+                                {getTagLabel(tag, i18n.language)}
                             </span>
                         </label>
                     ))}
                     <div ref={observerTarget}>
                         {isFetchingNextPage && (
-                            <p className="text-xs text-stone-400 py-1">Загрузка...</p>
+                            <p className="text-xs text-stone-400 py-1">{t("rooms.filters.loadingTags")}</p>
                         )}
                     </div>
                 </div>
@@ -194,6 +196,7 @@ function FiltersPanel({
 
 export default function Rooms() {
     const [searchParams] = useSearchParams();
+    const { t } = useTranslation();
     const [sortBy, setSortBy] = useState("basePrice:asc");
     const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
     const [adults, setAdults] = useState("");
@@ -212,13 +215,20 @@ export default function Rooms() {
     const effectiveMinAdults   = adults   ? Number(adults)   : undefined;
     const effectiveMinChildren = children ? Number(children) : undefined;
 
+    const SORT_OPTIONS = [
+        { value: "basePrice:asc",  label: t("rooms.sort.priceAsc") },
+        { value: "basePrice:desc", label: t("rooms.sort.priceDesc") },
+        { value: "name:asc",       label: t("rooms.sort.nameAsc") },
+        { value: "name:desc",      label: t("rooms.sort.nameDesc") },
+    ];
+
     const handleTagToggle = (id: number) => {
         setSelectedTagIds((prev) =>
             prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]
         );
     };
 
-    const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
         useInfiniteRoomTypes({
             pageSize: 10,
             isActive: true,
@@ -252,6 +262,11 @@ export default function Rooms() {
         return () => observer.disconnect();
     }, [handleObserver]);
 
+    const totalCount = data?.pages[0]?.totalCount ?? 0;
+    const foundText = checkIn && checkOut
+        ? t("rooms.foundWithDates", { count: totalCount })
+        : t("rooms.found", { count: totalCount });
+
     return (
         <div className="flex gap-6 py-4">
             <FiltersPanel
@@ -266,9 +281,7 @@ export default function Rooms() {
             <div className="flex-1 flex flex-col gap-4 min-w-0">
                 <div className="flex items-center justify-between">
                     <p className="text-stone-500 text-sm">
-                        {isLoading
-                            ? "Загрузка..."
-                            : `Найдено: ${data?.pages[0]?.totalCount ?? 0}${checkIn && checkOut ? " (с учётом доступности)" : ""}`}
+                        {isLoading ? t("common.loading") : foundText}
                     </p>
                     <select
                         value={sortBy}
@@ -298,20 +311,18 @@ export default function Rooms() {
 
                     <div ref={observerTarget} className="py-4 text-center">
                         {isFetchingNextPage && (
-                            <p className="text-stone-400 text-sm">Загружаем ещё...</p>
+                            <p className="text-stone-400 text-sm">{t("rooms.loadingMore")}</p>
                         )}
                         {!hasNextPage && allRoomTypes.length > 0 && (
-                            <p className="text-stone-300 text-xs">Все номера загружены</p>
+                            <p className="text-stone-300 text-xs">{t("rooms.allLoaded")}</p>
                         )}
                     </div>
 
-                    {!isLoading && allRoomTypes.length === 0 && (
+                    {!isLoading && !error && allRoomTypes.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-16">
-                            <p className="font-georgia text-stone-600 text-lg">Номера не найдены</p>
+                            <p className="font-georgia text-stone-600 text-lg">{t("rooms.notFound")}</p>
                             <p className="text-sm mt-1 text-stone-400">
-                                {checkIn && checkOut
-                                    ? "На выбранные даты свободных номеров нет"
-                                    : "Попробуйте изменить параметры поиска"}
+                                {checkIn && checkOut ? t("rooms.notFoundWithDates") : t("rooms.notFoundGeneral")}
                             </p>
                         </div>
                     )}

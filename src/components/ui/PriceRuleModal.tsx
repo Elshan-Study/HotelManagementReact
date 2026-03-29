@@ -1,11 +1,26 @@
 // src/components/ui/PriceRuleModal.tsx
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { RuleType } from '../../features/priceRule/priceRuleTypes';
 import type { PriceRuleResponseDto } from '../../features/priceRule/priceRuleTypes';
 import { useCreatePriceRule, useUpdatePriceRule } from '../../features/priceRule/usePriceRule';
 import toast from 'react-hot-toast';
 import { getErrorMessage } from '../../api/errorHandler.ts';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { DATE_FORMAT } from "../../utils/datePickerConfig";
+
+
+function toISO(date: Date | null): string {
+    if (!date) return '';
+    return date.toISOString().split('T')[0];
+}
+
+function fromISO(iso: string): Date | null {
+    if (!iso) return null;
+    return new Date(iso + 'T00:00:00');
+}
 
 interface Props {
     isOpen: boolean;
@@ -27,11 +42,6 @@ interface FormValues {
     isGlobal: boolean;
 }
 
-const RULE_TYPE_OPTIONS = [
-    { value: RuleType.SeasonalRange, label: 'Диапазон' },
-    { value: RuleType.SpecialDate, label: 'Специальная дата' },
-];
-
 const toRuleTypeNumber = (val: unknown): number => {
     if (typeof val === 'number') return val;
     if (val === 'SeasonalRange') return RuleType.SeasonalRange;
@@ -40,10 +50,11 @@ const toRuleTypeNumber = (val: unknown): number => {
 };
 
 export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, onClose }: Props) {
+    const { t, i18n } = useTranslation();
     const createMutation = useCreatePriceRule();
     const updateMutation = useUpdatePriceRule();
 
-    const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormValues>({
+    const { register, handleSubmit, watch, setValue, reset, control, formState: { errors } } = useForm<FormValues>({
         defaultValues: {
             name: '',
             ruleType: RuleType.SeasonalRange,
@@ -57,12 +68,16 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
         },
     });
 
-    const ruleType = watch('ruleType');
+    const ruleType  = watch('ruleType');
     const startDate = watch('startDate');
     const isPercent = watch('isPercent');
     const isPercentBool = isPercent === true || (isPercent as unknown) === 'true';
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date();
     const isSpecialDate = Number(ruleType) === RuleType.SpecialDate;
+
+    const lang = i18n.language;
+    const fmt  = DATE_FORMAT[lang] ?? 'dd.MM.yyyy';
+    const placeholder = t('booking.datePlaceholder');
 
     useEffect(() => {
         if (isSpecialDate) {
@@ -73,15 +88,15 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
     useEffect(() => {
         if (mode === 'edit' && initialData) {
             reset({
-                name: initialData.name,
-                ruleType: toRuleTypeNumber(initialData.ruleType),
-                startDate: initialData.startDate.split('T')[0],
-                endDate: initialData.endDate.split('T')[0],
+                name:       initialData.name,
+                ruleType:   toRuleTypeNumber(initialData.ruleType),
+                startDate:  initialData.startDate.split('T')[0],
+                endDate:    initialData.endDate.split('T')[0],
                 isIncrease: initialData.isIncrease,
-                isPercent: initialData.isPercent,
-                value: initialData.value,
-                isActive: initialData.isActive,
-                isGlobal: initialData.roomTypeId === null,
+                isPercent:  initialData.isPercent,
+                value:      initialData.value,
+                isActive:   initialData.isActive,
+                isGlobal:   initialData.roomTypeId === null,
             });
         } else if (mode === 'create') {
             reset({
@@ -98,16 +113,21 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
         }
     }, [mode, initialData, reset, isOpen]);
 
+    const RULE_TYPE_OPTIONS = [
+        { value: RuleType.SeasonalRange, label: t('priceRuleModal.ruleTypes.SeasonalRange') },
+        { value: RuleType.SpecialDate,   label: t('priceRuleModal.ruleTypes.SpecialDate')   },
+    ];
+
     const onSubmit = async (values: FormValues) => {
         try {
             const normalized = {
                 ...values,
-                ruleType: toRuleTypeNumber(values.ruleType),
-                value: Number(values.value),
+                ruleType:   toRuleTypeNumber(values.ruleType),
+                value:      Number(values.value),
                 isIncrease: values.isIncrease || (values.isIncrease as unknown) === 'true',
-                isPercent: values.isPercent || (values.isPercent as unknown) === 'true',
-                startDate: new Date(values.startDate + 'T00:00:00Z').toISOString(),
-                endDate: new Date((values.endDate || values.startDate) + 'T00:00:00Z').toISOString(),
+                isPercent:  values.isPercent  || (values.isPercent  as unknown) === 'true',
+                startDate:  new Date(values.startDate + 'T00:00:00Z').toISOString(),
+                endDate:    new Date((values.endDate || values.startDate) + 'T00:00:00Z').toISOString(),
             };
 
             if (mode === 'create') {
@@ -117,24 +137,24 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                         roomTypeId: normalized.isGlobal ? null : roomTypeId,
                     }),
                     {
-                        loading: 'Создание правила...',
-                        success: 'Правило успешно создано',
-                        error: (err) => getErrorMessage(err),
+                        loading: t('priceRuleModal.creating'),
+                        success: t('priceRuleModal.created'),
+                        error:   (err) => getErrorMessage(err),
                     }
                 );
             } else if (initialData) {
                 await toast.promise(
                     updateMutation.mutateAsync({ id: initialData.id, data: normalized }),
                     {
-                        loading: 'Сохранение изменений...',
-                        success: 'Правило обновлено',
-                        error: (err) => getErrorMessage(err),
+                        loading: t('priceRuleModal.saving'),
+                        success: t('priceRuleModal.updated'),
+                        error:   (err) => getErrorMessage(err),
                     }
                 );
             }
             onClose();
         } catch {
-            // ошибка уже показана через toast.promise
+            // error already shown via toast.promise
         }
     };
 
@@ -142,28 +162,31 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
 
     const isPending = createMutation.isPending || updateMutation.isPending;
 
+    const pickerClass = (hasError: boolean) =>
+        `w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-gray-400 ${hasError ? 'border-red-400' : 'border-gray-300'}`;
+
     return (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
                 <h2 className="text-lg font-bold mb-4">
-                    {mode === 'create' ? 'Создать правило цены' : 'Редактировать правило'}
+                    {mode === 'create' ? t('priceRuleModal.createTitle') : t('priceRuleModal.editTitle')}
                 </h2>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-                    {/* Название */}
+                    {/* Name */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Название</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('priceRuleModal.name')}</label>
                         <input
-                            {...register('name', { required: 'Обязательное поле', maxLength: 200 })}
+                            {...register('name', { required: t('priceRuleModal.validation.required'), maxLength: 200 })}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400"
-                            placeholder="Например: Летний сезон"
+                            placeholder={t('priceRuleModal.namePlaceholder')}
                         />
                         {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
                     </div>
 
-                    {/* Тип правила */}
+                    {/* Rule type */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Тип правила</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{t('priceRuleModal.ruleType')}</label>
                         <select
                             value={watch('ruleType')}
                             onChange={(e) => setValue('ruleType', Number(e.target.value))}
@@ -175,38 +198,56 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                         </select>
                     </div>
 
-                    {/* Даты */}
+                    {/* Dates */}
                     <div className="flex gap-3">
                         <div className="flex-1">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Дата начала</label>
-                            <input
-                                type="date"
-                                min={today}
-                                {...register('startDate', { required: 'Обязательное поле' })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400"
+                            <label className="block text-sm font-medium text-gray-700 mb-1">{t('priceRuleModal.startDate')}</label>
+                            <Controller
+                                name="startDate"
+                                control={control}
+                                rules={{ required: t('priceRuleModal.validation.required') }}
+                                render={({ field }) => (
+                                    <DatePicker
+                                        selected={fromISO(field.value)}
+                                        onChange={(date: Date | null) => field.onChange(toISO(date))}
+                                        minDate={today}
+                                        locale={lang}
+                                        dateFormat={fmt}
+                                        placeholderText={placeholder}
+                                        className={pickerClass(!!errors.startDate)}
+                                    />
+                                )}
                             />
                             {errors.startDate && <p className="text-red-500 text-xs mt-1">{errors.startDate.message}</p>}
                         </div>
                         <div className="flex-1">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                {isSpecialDate ? 'Дата (авто)' : 'Дата конца'}
+                                {isSpecialDate ? t('priceRuleModal.endDateAuto') : t('priceRuleModal.endDate')}
                             </label>
-                            <input
-                                type="date"
-                                min={today}
-                                {...register('endDate', {
-                                    required: !isSpecialDate ? 'Обязательное поле' : false,
-                                })}
-                                disabled={isSpecialDate}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400 disabled:bg-gray-100 disabled:text-gray-400"
+                            <Controller
+                                name="endDate"
+                                control={control}
+                                rules={{ required: !isSpecialDate ? t('priceRuleModal.validation.required') : false }}
+                                render={({ field }) => (
+                                    <DatePicker
+                                        selected={fromISO(field.value)}
+                                        onChange={(date: Date | null) => field.onChange(toISO(date))}
+                                        minDate={fromISO(startDate) ?? today}
+                                        locale={lang}
+                                        dateFormat={fmt}
+                                        placeholderText={placeholder}
+                                        disabled={isSpecialDate}
+                                        className={pickerClass(!!errors.endDate) + (isSpecialDate ? ' bg-gray-100 text-gray-400' : '')}
+                                    />
+                                )}
                             />
                             {errors.endDate && <p className="text-red-500 text-xs mt-1">{errors.endDate.message}</p>}
                         </div>
                     </div>
 
-                    {/* Надбавка / скидка */}
+                    {/* Increase / Discount */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Тип изменения</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('priceRuleModal.changeType')}</label>
                         <div className="flex gap-4">
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
@@ -214,7 +255,7 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                                     checked={watch('isIncrease') === true || (watch('isIncrease') as unknown) === 'true'}
                                     onChange={() => setValue('isIncrease', true)}
                                 />
-                                <span className="text-sm text-green-600 font-medium">Надбавка</span>
+                                <span className="text-sm text-green-600 font-medium">{t('priceRuleModal.increase')}</span>
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer">
                                 <input
@@ -222,14 +263,14 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                                     checked={watch('isIncrease') === false || (watch('isIncrease') as unknown) === 'false'}
                                     onChange={() => setValue('isIncrease', false)}
                                 />
-                                <span className="text-sm text-red-500 font-medium">Скидка</span>
+                                <span className="text-sm text-red-500 font-medium">{t('priceRuleModal.discount')}</span>
                             </label>
                         </div>
                     </div>
 
-                    {/* Значение + % или абсолютное */}
+                    {/* Value */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Значение</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('priceRuleModal.value')}</label>
                         <div className="flex gap-3 items-start">
                             <div className="flex-1">
                                 <input
@@ -238,10 +279,10 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                                     min="0.01"
                                     max={isPercentBool ? 100 : undefined}
                                     {...register('value', {
-                                        required: 'Обязательное поле',
-                                        min: { value: 0.01, message: 'Должно быть больше 0' },
+                                        required: t('priceRuleModal.validation.required'),
+                                        min: { value: 0.01, message: t('priceRuleModal.validation.min') },
                                         max: isPercentBool
-                                            ? { value: 100, message: 'Максимум 100%' }
+                                            ? { value: 100, message: t('priceRuleModal.validation.maxPercent') }
                                             : undefined,
                                     })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-gray-400"
@@ -269,7 +310,7 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                         </div>
                     </div>
 
-                    {/* Глобальное правило — только при создании */}
+                    {/* Global rule — create only */}
                     {mode === 'create' && (
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -279,13 +320,13 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                                 className="w-4 h-4 accent-orange-500"
                             />
                             <span className="text-sm text-gray-700">
-                                Глобальное правило
-                                <span className="text-gray-400 text-xs ml-1">(для всех типов комнат)</span>
+                                {t('priceRuleModal.global')}
+                                <span className="text-gray-400 text-xs ml-1">{t('priceRuleModal.globalHint')}</span>
                             </span>
                         </label>
                     )}
 
-                    {/* isActive только при редактировании */}
+                    {/* isActive — edit only */}
                     {mode === 'edit' && (
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input
@@ -294,25 +335,25 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                                 onChange={(e) => setValue('isActive', e.target.checked)}
                                 className="w-4 h-4"
                             />
-                            <span className="text-sm text-gray-700">Активно</span>
+                            <span className="text-sm text-gray-700">{t('priceRuleModal.isActive')}</span>
                         </label>
                     )}
 
-                    {/* Кнопки */}
+                    {/* Buttons */}
                     <div className="flex justify-end gap-3 pt-2">
                         <button
                             type="button"
                             onClick={onClose}
                             className="px-4 py-2 rounded-lg bg-stone-100 text-stone-700 hover:bg-stone-200 transition-colors"
                         >
-                            Отмена
+                            {t('priceRuleModal.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={isPending}
                             className="px-4 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors disabled:opacity-50"
                         >
-                            {isPending ? 'Сохранение...' : 'Сохранить'}
+                            {isPending ? t('priceRuleModal.saving') : t('priceRuleModal.save')}
                         </button>
                     </div>
                 </form>

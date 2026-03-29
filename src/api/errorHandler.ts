@@ -1,5 +1,6 @@
 // src/api/errorHandler.ts
 import type { AxiosError } from 'axios';
+import i18n from '../i18n';
 
 interface ProblemDetails {
     title?: string;
@@ -10,14 +11,14 @@ interface ProblemDetails {
 
 export const getErrorMessage = (error: unknown): string => {
     const axiosError = error as AxiosError<ProblemDetails>;
+    const t = i18n.t.bind(i18n);
 
     if (!axiosError.response) {
-        return 'Сервер недоступен. Проверьте подключение.';
+        return t('errors.serverUnavailable');
     }
 
     const { status, data } = axiosError.response;
 
-    // Сообщения из FluentValidation
     if (data?.errors) {
         const messages = Object.values(data.errors).flat();
         if (messages.length > 0) return messages.join('\n');
@@ -27,13 +28,13 @@ export const getErrorMessage = (error: unknown): string => {
     if (data?.title) return data.title;
 
     switch (status) {
-        case 400: return 'Некорректные данные запроса.';
-        case 401: return 'Необходима авторизация.';
-        case 403: return 'Недостаточно прав.';
-        case 404: return 'Ресурс не найден.';
-        case 409: return 'Конфликт данных.';
-        case 422: return 'Ошибка валидации.';
-        case 500: return 'Внутренняя ошибка сервера.';
-        default:  return `Ошибка ${status}.`;
+        case 400: return t('errors.badRequest');
+        case 401: return t('errors.unauthorized');
+        case 403: return t('errors.forbidden');
+        case 404: return t('errors.notFound');
+        case 409: return t('errors.conflict');
+        case 422: return t('errors.validation');
+        case 500: return t('errors.server');
+        default:  return t('errors.default', { status });
     }
 };

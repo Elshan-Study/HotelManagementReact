@@ -17,7 +17,10 @@ import type {
 } from './reservationTypes';
 
 export const useCreateReservation = () =>
-    useMutation({ mutationFn: (dto: CreateReservationDto) => createReservation(dto) });
+    useMutation({
+        mutationFn: (dto: CreateReservationDto) => createReservation(dto),
+        meta: { skipGlobalError: true },
+    });
 
 export const useReservationById = (id: string | null) =>
     useQuery({
@@ -73,5 +76,6 @@ export const useCancelMyReservation = () => {
         onSuccess: () => {
             void qc.invalidateQueries({ queryKey: ['myReservations'] });
         },
+        meta: { skipGlobalError: true }
     });
 };

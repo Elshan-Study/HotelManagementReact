@@ -1,7 +1,7 @@
 // components/ui/RoomTypeDropdown.tsx
-import {useState, useCallback, useRef, useEffect} from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useInfiniteRoomTypes } from "../../features/roomType/useRoomTypes.ts";
-// import type { RoomTypeResponseDto } from "../../features/roomType/roomTypeTypes";
 
 interface Props {
     selectedTypeId: number | null;
@@ -18,10 +18,10 @@ export default function RoomTypeDropdown({
                                              onEditRoomType,
                                              onDeleteRoomType,
                                          }: Props) {
+    const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
-
 
     useEffect(() => {
         const timer = setTimeout(() => setDebouncedSearch(search), 300);
@@ -42,10 +42,12 @@ export default function RoomTypeDropdown({
 
     const roomTypes = roomTypesData?.pages.flatMap((page) => page.items) ?? [];
 
+    const allTypesLabel = t("priceCalendar.selectRoomType").replace(/^—\s*/, "").replace(/\s*—$/, "").trim();
+
     const selectedTypeName =
         selectedTypeId === null
-            ? "All Room Types"
-            : roomTypes.find((t) => t.id === selectedTypeId)?.name || "Unknown";
+            ? allTypesLabel
+            : roomTypes.find((t) => t.id === selectedTypeId)?.name || "—";
 
     const observerRef = useRef<IntersectionObserver | null>(null);
 
@@ -75,7 +77,7 @@ export default function RoomTypeDropdown({
 
     const handleTypeSelect = (typeId: number | null) => {
         onTypeSelect(typeId);
-        setSearch(typeId === null ? "All Room Types" : roomTypes.find((t) => t.id === typeId)?.name ?? "");
+        setSearch(typeId === null ? "" : roomTypes.find((t) => t.id === typeId)?.name ?? "");
         setIsOpen(false);
     };
 
@@ -92,7 +94,7 @@ export default function RoomTypeDropdown({
                     setSearch("");
                     setIsOpen(true);
                 }}
-                placeholder="Search room types..."
+                placeholder={t("roomsAdmin.searchPlaceholder")}
                 className="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none bg-white"
             />
             <button
@@ -120,7 +122,7 @@ export default function RoomTypeDropdown({
                                     : "hover:bg-gray-100"
                             }`}
                         >
-                            <span>All Room Types</span>
+                            <span>{t("common.all")}</span>
                         </button>
                     </div>
 
@@ -136,16 +138,16 @@ export default function RoomTypeDropdown({
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
-                            <span>Add New Room Type</span>
+                            <span>{t("roomTypeModal.addTitle")}</span>
                         </button>
                     </div>
 
-                    {/* Разделитель */}
+                    {/* Divider */}
                     <div className="mx-2 border-t border-gray-100" />
 
                     {/* Loading */}
                     {isLoading && (
-                        <div className="px-4 py-2 text-gray-500 text-sm">Loading types...</div>
+                        <div className="px-4 py-2 text-gray-500 text-sm">{t("roomModal.loadingTypes")}</div>
                     )}
 
                     {/* Room Types List */}
@@ -173,7 +175,7 @@ export default function RoomTypeDropdown({
                                             onEditRoomType(type.id);
                                         }}
                                         className="p-1 hover:bg-blue-100 rounded-md transition-colors"
-                                        title="Edit room type"
+                                        title={t("common.edit")}
                                     >
                                         <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -185,7 +187,7 @@ export default function RoomTypeDropdown({
                                             onDeleteRoomType(type.id);
                                         }}
                                         className="p-1 hover:bg-red-100 rounded-md transition-colors"
-                                        title="Delete room type"
+                                        title={t("common.delete")}
                                     >
                                         <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -196,10 +198,10 @@ export default function RoomTypeDropdown({
                         ))}
                     </div>
 
-                    {/* Infinite scroll триггер */}
+                    {/* Infinite scroll trigger */}
                     <div ref={triggerRef} className="py-1 text-center">
                         {isFetchingNextPage && (
-                            <div className="text-xs text-gray-400 py-1">Loading more...</div>
+                            <div className="text-xs text-gray-400 py-1">{t("common.loadingMore")}</div>
                         )}
                     </div>
                 </div>

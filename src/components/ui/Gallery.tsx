@@ -32,21 +32,35 @@ export default function Gallery({ slides }: Props) {
                 <div className="absolute inset-0 bg-stone-200 transition-all duration-500" />
             )}
 
-            {/* Затемнение снизу для читаемости текста */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
 
-            {/* Название слайда */}
-            <span className="absolute bottom-12 left-0 right-0 text-center font-georgia text-white font-semibold text-2xl drop-shadow z-10">
-                {slide.label}
-            </span>
+            <span className="absolute bottom-12 left-0 right-0 text-center text-white font-semibold text-2xl drop-shadow z-10">{slide.label}</span>
 
-            <button onClick={prev} className="btn absolute left-3 z-10 bg-white/80 hover:bg-white rounded-full w-10 h-10 flex items-center justify-center text-xl">←</button>
-            <button onClick={next} className="btn absolute right-3 z-10 bg-white/80 hover:bg-white rounded-full w-10 h-10 flex items-center justify-center text-xl">→</button>
+            <button
+                onClick={prev}
+                className="absolute left-3 z-10 bg-white/80 hover:bg-white rounded-full w-10 h-10 flex items-center justify-center text-xl
+                           transition-all duration-300
+                           hover:shadow-md
+                           hover:-translate-y-px"
+            >
+                ←
+            </button>
+            <button
+                onClick={next}
+                className="absolute right-3 z-10 bg-white/80 hover:bg-white rounded-full w-10 h-10 flex items-center justify-center text-xl
+                           transition-all duration-300
+                           hover:shadow-md
+                           hover:-translate-y-px"
+            >
+                →
+            </button>
 
             <div className="absolute bottom-4 flex gap-1.5 z-10">
                 {slides.map((_, i) => (
-                    <button key={i} onClick={() => setCurrent(i)}
-                            className={`w-2 h-2 rounded-full transition ${i === current ? "bg-amber-500" : "bg-white/60"}`}
+                    <button
+                        key={i}
+                        onClick={() => setCurrent(i)}
+                        className={`w-2 h-2 rounded-full transition ${i === current ? "bg-amber-500" : "bg-white/60"}`}
                     />
                 ))}
             </div>

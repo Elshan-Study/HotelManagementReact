@@ -5,7 +5,7 @@ export const RuleType = {
     SpecialDate: 1,
 } as const;
 
-export type RuleType = typeof RuleType[keyof typeof RuleType]; //используется только для сравнения
+export type RuleType = typeof RuleType[keyof typeof RuleType]; //used for comparison only
 
 export interface PriceRuleResponseDto {
     id: number;

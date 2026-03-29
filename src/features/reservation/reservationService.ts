@@ -37,13 +37,13 @@ export const getReservations = async (filter: ReservationFilterRequest): Promise
     return data;
 };
 
-// PUT /api/reservations/:id — изменить даты / статус / заметки (требует авторизации)
+// PUT /api/reservations/:id — update dates / status / notes (requires auth)
 export const updateReservation = async (id: string, dto: UpdateReservationDto): Promise<ReservationResponseDto> => {
     const { data } = await api.put<ReservationResponseDto>(`${BASE}/${id}`, dto);
     return data;
 };
 
-// DELETE /api/reservations/:id — отменить бронь (требует авторизации)
+// DELETE /api/reservations/:id — cancel a reservation (requires auth)
 export const cancelReservation = async (id: string): Promise<void> => {
     await api.delete(`${BASE}/${id}`);
 };
@@ -53,7 +53,7 @@ export const processMockPayment = async (dto: MockPaymentDto): Promise<Reservati
     return data;
 };
 
-// GET /api/user/reservations — свои брони
+// GET /api/user/reservations — current user's reservations
 export const getMyReservations = async (page: number, pageSize: number): Promise<PagedResult<ReservationResponseDto>> => {
     const { data } = await api.get<PagedResult<ReservationResponseDto>>('/user/reservations', {
         params: { page, pageSize }
@@ -61,7 +61,7 @@ export const getMyReservations = async (page: number, pageSize: number): Promise
     return data;
 };
 
-// POST /api/user/reservations/:id/cancel — отменить свою бронь
+// POST /api/user/reservations/:id/cancel — cancel current user's reservation
 export const cancelMyReservation = async (id: string): Promise<void> => {
     await api.post(`/user/reservations/${id}/cancel`);
 };

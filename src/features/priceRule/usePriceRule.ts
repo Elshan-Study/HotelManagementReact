@@ -1,4 +1,3 @@
-// src/features/priceRule/usePriceRule.ts
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import type {
     CreatePriceRuleDto,

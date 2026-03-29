@@ -6,7 +6,7 @@ const BASE = "/admin/audit-logs";
 export const getAuditLogs = async (
     params: AuditLogFilterRequest
 ): Promise<PagedResult<AuditLogEntry>> => {
-    // Собираем query-параметры вручную чтобы передать массивы корректно
+    // Build query params manually to correctly serialize array values
     const query = new URLSearchParams();
 
     query.set("page", String(params.page));
@@ -18,10 +18,10 @@ export const getAuditLogs = async (
     if (params.from)       query.set("from",        params.from);
     if (params.to)         query.set("to",          params.to);
 
-    // Мультивыбор действий
+    // Multi-select action types
     (params.actionTypes ?? []).forEach((t) => query.append("actionTypes", t));
 
-    // Мультивыбор пользователей
+    // Multi-select actor user ids
     (params.actorUserIds ?? []).forEach((id) => query.append("actorUserIds", id));
 
     const { data } = await api.get<PagedResult<AuditLogEntry>>(`${BASE}?${query.toString()}`);

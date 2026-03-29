@@ -1,28 +1,45 @@
+import "./i18n";
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider } from 'react-router-dom'
 import { Provider } from 'react-redux'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-// import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 import { store } from './store'
 import './index.css'
 import { router } from "../router.tsx";
 import { refresh } from './features/auth/authService.ts';
 import { setLoading, setUser } from './store/authSlice';
+import { getErrorMessage } from './api/errorHandler';
 
-// Создаём QueryClient
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: 1000 * 60 * 5, // 5 минут
+            staleTime: 1000 * 60 * 5,
             refetchOnWindowFocus: false,
             retry: 1,
         },
     },
+    queryCache: new QueryCache({
+        onError: (error) => {
+            const message = getErrorMessage(error);
+            toast.error(message, {
+                id: message,
+            });
+        },
+    }),
+    mutationCache: new MutationCache({
+        onError: (error, _variables, _context, mutation) => {
+            if (mutation.meta?.skipGlobalError) return;
+            const message = getErrorMessage(error);
+            toast.error(message, {
+                id: message,
+            });
+        },
+    }),
 });
 
-// Восстанавливаем сессию при старте
 refresh()
     .then(result => store.dispatch(setUser(result)))
     .catch(() => store.dispatch(setLoading(false)));
