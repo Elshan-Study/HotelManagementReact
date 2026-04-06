@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRoomType } from "../features/roomType/useRoomTypes";
 import { usePriceCalculation } from "../features/priceRule/usePriceRule";
-import { getTodayAndTomorrow, nightsBetween, nextDay, pluralNights, breakLongWords } from "../utils/dateUtils";
+import { getTodayAndTomorrow, nightsBetween, nextDay, pluralNights, breakLongWords ,toISO, fromISO } from "../utils/dateUtils";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {DATE_FORMAT, DATE_PLACEHOLDER} from "../utils/datePickerConfig";
@@ -11,15 +11,6 @@ import {DATE_FORMAT, DATE_PLACEHOLDER} from "../utils/datePickerConfig";
 
 
 
-function toISO(date: Date | null): string {
-    if (!date) return "";
-    return date.toISOString().split("T")[0];
-}
-
-function fromISO(iso: string): Date | null {
-    if (!iso) return null;
-    return new Date(iso + "T00:00:00");
-}
 
 const VISIBLE_PHOTOS = 5;
 

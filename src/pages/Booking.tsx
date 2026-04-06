@@ -10,6 +10,8 @@ import {
     getTodayAndTomorrow,
     nightsBetween,
     nextDay,
+    toISO,
+    fromISO
 } from "../utils/dateUtils";
 import type { ReservationItemDto } from "../features/reservation/reservationTypes";
 import { getErrorMessage } from "../api/errorHandler.ts";
@@ -20,15 +22,6 @@ import {DATE_FORMAT, DATE_PLACEHOLDER} from '../utils/datePickerConfig';
 import * as React from "react";
 
 
-function toISO(date: Date | null): string {
-    if (!date) return "";
-    return date.toISOString().split("T")[0];
-}
-
-function fromISO(iso: string): Date | null {
-    if (!iso) return null;
-    return new Date(iso + "T00:00:00");
-}
 
 interface PresetService {
     id: string;
