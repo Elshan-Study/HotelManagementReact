@@ -14,7 +14,10 @@ import { DATE_FORMAT } from "../../utils/datePickerConfig";
 
 function toISO(date: Date | null): string {
     if (!date) return '';
-    return date.toISOString().split('T')[0];
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
 }
 
 function fromISO(iso: string): Date | null {
@@ -126,8 +129,8 @@ export default function PriceRuleModal({ isOpen, mode, roomTypeId, initialData, 
                 value:      Number(values.value),
                 isIncrease: values.isIncrease || (values.isIncrease as unknown) === 'true',
                 isPercent:  values.isPercent  || (values.isPercent  as unknown) === 'true',
-                startDate:  new Date(values.startDate + 'T00:00:00Z').toISOString(),
-                endDate:    new Date((values.endDate || values.startDate) + 'T00:00:00Z').toISOString(),
+                startDate:  new Date(values.startDate + 'T00:00:00').toISOString(),
+                endDate:    new Date((values.endDate || values.startDate) + 'T00:00:00').toISOString(),
             };
 
             if (mode === 'create') {
